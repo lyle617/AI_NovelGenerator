@@ -431,58 +431,185 @@ def create_interface():
                             interactive=True
                         )
 
-        return demo, {
-            # 返回所有组件的引用，用于后续的事件绑定
-            "chapter_content": chapter_content,
-            "log_output": log_output,
-            "filepath_input": filepath_input,
-            "chapter_num_input": chapter_num_input,
-            "user_guidance_input": user_guidance_input,
-            "llm_interface": llm_interface,
-            "llm_api_key": llm_api_key,
-            "llm_base_url": llm_base_url,
-            "llm_model": llm_model,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "timeout": timeout,
-            "embedding_interface": embedding_interface,
-            "embedding_api_key": embedding_api_key,
-            "embedding_base_url": embedding_base_url,
-            "embedding_model": embedding_model,
-            "retrieval_k": retrieval_k,
-            "topic_input": topic_input,
-            "genre_input": genre_input,
-            "num_chapters_input": num_chapters_input,
-            "word_number_input": word_number_input,
-            "characters_involved_input": characters_involved_input,
-            "key_items_input": key_items_input,
-            "scene_location_input": scene_location_input,
-            "time_constraint_input": time_constraint_input,
-            "btn_step1": btn_step1,
-            "btn_step2": btn_step2,
-            "btn_step3": btn_step3,
-            "btn_step4": btn_step4,
-            "btn_consistency": btn_consistency,
-            "btn_import_knowledge": btn_import_knowledge,
-            "btn_clear_vectorstore": btn_clear_vectorstore,
-            "btn_plot_arcs": btn_plot_arcs,
-            "btn_load_config": btn_load_config,
-            "btn_save_config": btn_save_config,
-            "btn_test_llm": btn_test_llm,
-            "btn_test_embedding": btn_test_embedding,
-            "architecture_content": architecture_content,
-            "blueprint_content": blueprint_content,
-            "character_content": character_content,
-            "summary_content": summary_content,
-            "btn_load_architecture": btn_load_architecture,
-            "btn_save_architecture": btn_save_architecture,
-            "btn_load_blueprint": btn_load_blueprint,
-            "btn_save_blueprint": btn_save_blueprint,
-            "btn_load_character": btn_load_character,
-            "btn_save_character": btn_save_character,
-            "btn_load_summary": btn_load_summary,
-            "btn_save_summary": btn_save_summary
-        }
+        # 在Blocks上下文内直接设置事件处理器
+        # 配置相关事件
+        btn_load_config.click(
+            fn=handle_load_config,
+            outputs=[
+                llm_interface, llm_api_key, llm_base_url,
+                llm_model, temperature, max_tokens, timeout,
+                embedding_interface, embedding_api_key, embedding_base_url,
+                embedding_model, retrieval_k,
+                topic_input, genre_input, num_chapters_input,
+                word_number_input, filepath_input, user_guidance_input,
+                characters_involved_input, key_items_input,
+                scene_location_input, time_constraint_input,
+                log_output
+            ]
+        )
+
+        btn_save_config.click(
+            fn=handle_save_config,
+            inputs=[
+                llm_interface, llm_api_key, llm_base_url,
+                llm_model, temperature, max_tokens, timeout,
+                embedding_interface, embedding_api_key, embedding_base_url,
+                embedding_model, retrieval_k,
+                topic_input, genre_input, num_chapters_input,
+                word_number_input, filepath_input, user_guidance_input,
+                characters_involved_input, key_items_input,
+                scene_location_input, time_constraint_input
+            ],
+            outputs=log_output
+        )
+
+        # 测试配置事件
+        btn_test_llm.click(
+            fn=handle_test_llm_config,
+            inputs=[
+                llm_interface, llm_api_key, llm_base_url,
+                llm_model, temperature, max_tokens, timeout
+            ],
+            outputs=log_output
+        )
+
+        btn_test_embedding.click(
+            fn=handle_test_embedding_config,
+            inputs=[
+                embedding_interface, embedding_api_key,
+                embedding_base_url, embedding_model
+            ],
+            outputs=log_output
+        )
+
+        # 核心生成功能事件
+        btn_step1.click(
+            fn=handle_generate_architecture,
+            inputs=[
+                llm_interface, llm_api_key, llm_base_url,
+                llm_model, temperature, max_tokens, timeout,
+                topic_input, genre_input, num_chapters_input,
+                word_number_input, filepath_input, user_guidance_input,
+                log_output
+            ],
+            outputs=log_output
+        )
+
+        btn_step2.click(
+            fn=handle_generate_blueprint,
+            inputs=[
+                llm_interface, llm_api_key, llm_base_url,
+                llm_model, temperature, max_tokens, timeout,
+                filepath_input, log_output
+            ],
+            outputs=log_output
+        )
+
+        btn_step3.click(
+            fn=handle_generate_chapter_draft,
+            inputs=[
+                llm_interface, llm_api_key, llm_base_url,
+                llm_model, temperature, max_tokens, timeout,
+                embedding_interface, embedding_api_key, embedding_base_url,
+                embedding_model, retrieval_k,
+                filepath_input, chapter_num_input, user_guidance_input,
+                log_output
+            ],
+            outputs=[chapter_content, log_output]
+        )
+
+        btn_step4.click(
+            fn=handle_finalize_chapter,
+            inputs=[
+                llm_interface, llm_api_key, llm_base_url,
+                llm_model, temperature, max_tokens, timeout,
+                embedding_interface, embedding_api_key, embedding_base_url,
+                embedding_model,
+                filepath_input, chapter_num_input, chapter_content,
+                log_output
+            ],
+            outputs=log_output
+        )
+
+        # 辅助功能事件
+        btn_consistency.click(
+            fn=handle_consistency_check,
+            inputs=[
+                llm_interface, llm_api_key, llm_base_url,
+                llm_model, temperature, max_tokens, timeout,
+                filepath_input, chapter_num_input, log_output
+            ],
+            outputs=log_output
+        )
+
+        btn_import_knowledge.click(
+            fn=handle_import_knowledge,
+            inputs=[filepath_input, log_output],
+            outputs=log_output
+        )
+
+        btn_clear_vectorstore.click(
+            fn=handle_clear_vectorstore,
+            inputs=[filepath_input, log_output],
+            outputs=log_output
+        )
+
+        btn_plot_arcs.click(
+            fn=handle_show_plot_arcs,
+            inputs=[filepath_input, log_output],
+            outputs=log_output
+        )
+
+        # 文件管理事件
+        btn_load_architecture.click(
+            fn=lambda filepath: handle_load_file(filepath, "Novel_architecture.txt"),
+            inputs=filepath_input,
+            outputs=[architecture_content, log_output]
+        )
+
+        btn_save_architecture.click(
+            fn=lambda filepath, content: handle_save_file(filepath, "Novel_architecture.txt", content),
+            inputs=[filepath_input, architecture_content],
+            outputs=log_output
+        )
+
+        btn_load_blueprint.click(
+            fn=lambda filepath: handle_load_file(filepath, "Novel_directory.txt"),
+            inputs=filepath_input,
+            outputs=[blueprint_content, log_output]
+        )
+
+        btn_save_blueprint.click(
+            fn=lambda filepath, content: handle_save_file(filepath, "Novel_directory.txt", content),
+            inputs=[filepath_input, blueprint_content],
+            outputs=log_output
+        )
+
+        btn_load_character.click(
+            fn=lambda filepath: handle_load_file(filepath, "character_state.txt"),
+            inputs=filepath_input,
+            outputs=[character_content, log_output]
+        )
+
+        btn_save_character.click(
+            fn=lambda filepath, content: handle_save_file(filepath, "character_state.txt", content),
+            inputs=[filepath_input, character_content],
+            outputs=log_output
+        )
+
+        btn_load_summary.click(
+            fn=lambda filepath: handle_load_file(filepath, "global_summary.txt"),
+            inputs=filepath_input,
+            outputs=[summary_content, log_output]
+        )
+
+        btn_save_summary.click(
+            fn=lambda filepath, content: handle_save_file(filepath, "global_summary.txt", content),
+            inputs=[filepath_input, summary_content],
+            outputs=log_output
+        )
+
+        return demo
 
 # 事件处理函数
 def handle_load_config():
@@ -856,189 +983,10 @@ def handle_show_plot_arcs(filepath, current_log):
     except Exception as e:
         return current_log + app.log_message(f"❌ 查看剧情要点时出错: {str(e)}")
 
-def setup_event_handlers(demo, components):
-    """设置事件处理器"""
-
-    # 配置相关事件
-    components["btn_load_config"].click(
-        fn=handle_load_config,
-        outputs=[
-            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
-            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
-            components["embedding_interface"], components["embedding_api_key"], components["embedding_base_url"],
-            components["embedding_model"], components["retrieval_k"],
-            components["topic_input"], components["genre_input"], components["num_chapters_input"],
-            components["word_number_input"], components["filepath_input"], components["user_guidance_input"],
-            components["characters_involved_input"], components["key_items_input"],
-            components["scene_location_input"], components["time_constraint_input"],
-            components["log_output"]
-        ]
-    )
-
-    components["btn_save_config"].click(
-        fn=handle_save_config,
-        inputs=[
-            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
-            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
-            components["embedding_interface"], components["embedding_api_key"], components["embedding_base_url"],
-            components["embedding_model"], components["retrieval_k"],
-            components["topic_input"], components["genre_input"], components["num_chapters_input"],
-            components["word_number_input"], components["filepath_input"], components["user_guidance_input"],
-            components["characters_involved_input"], components["key_items_input"],
-            components["scene_location_input"], components["time_constraint_input"]
-        ],
-        outputs=components["log_output"]
-    )
-
-    # 测试配置事件
-    components["btn_test_llm"].click(
-        fn=handle_test_llm_config,
-        inputs=[
-            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
-            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"]
-        ],
-        outputs=components["log_output"]
-    )
-
-    components["btn_test_embedding"].click(
-        fn=handle_test_embedding_config,
-        inputs=[
-            components["embedding_interface"], components["embedding_api_key"],
-            components["embedding_base_url"], components["embedding_model"]
-        ],
-        outputs=components["log_output"]
-    )
-
-    # 核心生成功能事件
-    components["btn_step1"].click(
-        fn=handle_generate_architecture,
-        inputs=[
-            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
-            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
-            components["topic_input"], components["genre_input"], components["num_chapters_input"],
-            components["word_number_input"], components["filepath_input"], components["user_guidance_input"],
-            components["log_output"]
-        ],
-        outputs=components["log_output"]
-    )
-
-    components["btn_step2"].click(
-        fn=handle_generate_blueprint,
-        inputs=[
-            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
-            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
-            components["filepath_input"], components["log_output"]
-        ],
-        outputs=components["log_output"]
-    )
-
-    components["btn_step3"].click(
-        fn=handle_generate_chapter_draft,
-        inputs=[
-            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
-            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
-            components["embedding_interface"], components["embedding_api_key"], components["embedding_base_url"],
-            components["embedding_model"], components["retrieval_k"],
-            components["filepath_input"], components["chapter_num_input"], components["user_guidance_input"],
-            components["log_output"]
-        ],
-        outputs=[components["chapter_content"], components["log_output"]]
-    )
-
-    components["btn_step4"].click(
-        fn=handle_finalize_chapter,
-        inputs=[
-            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
-            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
-            components["embedding_interface"], components["embedding_api_key"], components["embedding_base_url"],
-            components["embedding_model"],
-            components["filepath_input"], components["chapter_num_input"], components["chapter_content"],
-            components["log_output"]
-        ],
-        outputs=components["log_output"]
-    )
-
-    # 辅助功能事件
-    components["btn_consistency"].click(
-        fn=handle_consistency_check,
-        inputs=[
-            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
-            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
-            components["filepath_input"], components["chapter_num_input"], components["log_output"]
-        ],
-        outputs=components["log_output"]
-    )
-
-    components["btn_import_knowledge"].click(
-        fn=handle_import_knowledge,
-        inputs=[components["filepath_input"], components["log_output"]],
-        outputs=components["log_output"]
-    )
-
-    components["btn_clear_vectorstore"].click(
-        fn=handle_clear_vectorstore,
-        inputs=[components["filepath_input"], components["log_output"]],
-        outputs=components["log_output"]
-    )
-
-    components["btn_plot_arcs"].click(
-        fn=handle_show_plot_arcs,
-        inputs=[components["filepath_input"], components["log_output"]],
-        outputs=components["log_output"]
-    )
-
-    # 文件管理事件
-    components["btn_load_architecture"].click(
-        fn=lambda filepath: handle_load_file(filepath, "Novel_architecture.txt"),
-        inputs=components["filepath_input"],
-        outputs=[components["architecture_content"], components["log_output"]]
-    )
-
-    components["btn_save_architecture"].click(
-        fn=lambda filepath, content: handle_save_file(filepath, "Novel_architecture.txt", content),
-        inputs=[components["filepath_input"], components["architecture_content"]],
-        outputs=components["log_output"]
-    )
-
-    components["btn_load_blueprint"].click(
-        fn=lambda filepath: handle_load_file(filepath, "Novel_directory.txt"),
-        inputs=components["filepath_input"],
-        outputs=[components["blueprint_content"], components["log_output"]]
-    )
-
-    components["btn_save_blueprint"].click(
-        fn=lambda filepath, content: handle_save_file(filepath, "Novel_directory.txt", content),
-        inputs=[components["filepath_input"], components["blueprint_content"]],
-        outputs=components["log_output"]
-    )
-
-    components["btn_load_character"].click(
-        fn=lambda filepath: handle_load_file(filepath, "character_state.txt"),
-        inputs=components["filepath_input"],
-        outputs=[components["character_content"], components["log_output"]]
-    )
-
-    components["btn_save_character"].click(
-        fn=lambda filepath, content: handle_save_file(filepath, "character_state.txt", content),
-        inputs=[components["filepath_input"], components["character_content"]],
-        outputs=components["log_output"]
-    )
-
-    components["btn_load_summary"].click(
-        fn=lambda filepath: handle_load_file(filepath, "global_summary.txt"),
-        inputs=components["filepath_input"],
-        outputs=[components["summary_content"], components["log_output"]]
-    )
-
-    components["btn_save_summary"].click(
-        fn=lambda filepath, content: handle_save_file(filepath, "global_summary.txt", content),
-        inputs=[components["filepath_input"], components["summary_content"]],
-        outputs=components["log_output"]
-    )
+# 删除重复的事件处理器函数，已经在create_interface中直接设置
 
 if __name__ == "__main__":
-    demo, components = create_interface()
-    setup_event_handlers(demo, components)
+    demo = create_interface()
 
     print("🚀 启动AI小说生成器Web界面...")
     print("📝 访问地址: http://localhost:7860")
