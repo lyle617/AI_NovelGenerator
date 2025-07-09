@@ -3,8 +3,8 @@
 import logging
 from typing import Optional
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
-import google.generativeai as genai
-from google.generativeai import types
+from google import genai
+from google.genai import types
 from azure.ai.inference import ChatCompletionsClient
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.inference.models import SystemMessage, UserMessage
@@ -103,17 +103,17 @@ class GeminiAdapter(BaseLLMAdapter):
         self.model_name = model_name
         self.max_tokens = max_tokens
         self.temperature = temperature
-        # gemini超时时间是毫秒
-        self.timeout = timeout * 1000
+        self.timeout = timeout
 
-        self._client = genai.Client(api_key=self.api_key,http_options=types.HttpOptions(base_url=base_url,timeout=self.timeout))
+        # 使用新的 Google Gen AI SDK
+        self._client = genai.Client(api_key=self.api_key)
 
     def invoke(self, prompt: str) -> str:
         try:
             response = self._client.models.generate_content(
-                model = self.model_name,
-                contents = prompt,
-                config = types.GenerateContentConfig(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
                     max_output_tokens=self.max_tokens,
                     temperature=self.temperature,
                 ),
