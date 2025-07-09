@@ -1,0 +1,27 @@
+# Web版本额外依赖
+gradio>=4.0.0
+
+# 基础依赖
+requests
+typing-extensions
+
+# NLP 相关
+nltk
+sentence-transformers
+keybert
+
+# 向量数据库
+chromadb
+
+# LangChain 相关
+langchain
+langchain-core
+langchain-openai
+langchain-community
+langchain_chroma
+
+# AI 接口
+openai
+google-generativeai
+google-ai-generativelanguage
+azure-ai-inference

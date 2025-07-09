@@ -1,0 +1,1051 @@
+# web_app.py
+# -*- coding: utf-8 -*-
+"""
+AI_NovelGenerator Gradio Web Interface
+基于原有GUI功能创建的Web界面版本
+"""
+
+import gradio as gr
+import os
+import json
+import threading
+import traceback
+from typing import Optional, Tuple, Dict, Any
+
+# 导入原有的核心功能模块
+from config_manager import load_config, save_config, test_llm_config, test_embedding_config
+from novel_generator import (
+    Novel_architecture_generate,
+    Chapter_blueprint_generate,
+    generate_chapter_draft,
+    finalize_chapter,
+    import_knowledge_file,
+    clear_vector_store
+)
+from consistency_checker import check_consistency
+from utils import read_file, save_string_to_txt, clear_file_content
+from llm_adapters import create_llm_adapter
+from embedding_adapters import create_embedding_adapter
+
+class NovelGeneratorWebApp:
+    """AI小说生成器Web应用类"""
+
+    def __init__(self):
+        self.config_file = "config.json"
+        self.loaded_config = load_config(self.config_file)
+
+        # 初始化默认配置
+        self.init_default_config()
+
+        # 状态变量
+        self.current_chapter_num = 1
+        self.generation_in_progress = False
+
+    def init_default_config(self):
+        """初始化默认配置"""
+        if self.loaded_config:
+            self.last_llm = self.loaded_config.get("last_interface_format", "OpenAI")
+            self.last_embedding = self.loaded_config.get("last_embedding_interface_format", "OpenAI")
+        else:
+            self.last_llm = "OpenAI"
+            self.last_embedding = "OpenAI"
+
+    def log_message(self, message: str) -> str:
+        """添加日志消息"""
+        import datetime
+        timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+        return f"[{timestamp}] {message}\n"
+
+    def get_llm_config_from_form(self, interface_format, api_key, base_url, model_name,
+                                temperature, max_tokens, timeout):
+        """从表单获取LLM配置"""
+        return {
+            "interface_format": interface_format,
+            "api_key": api_key,
+            "base_url": base_url,
+            "model_name": model_name,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "timeout": timeout
+        }
+
+    def get_embedding_config_from_form(self, interface_format, api_key, base_url,
+                                     model_name, retrieval_k):
+        """从表单获取Embedding配置"""
+        return {
+            "interface_format": interface_format,
+            "api_key": api_key,
+            "base_url": base_url,
+            "model_name": model_name,
+            "retrieval_k": retrieval_k
+        }
+
+    def save_config_to_file(self, llm_config, embedding_config, novel_params):
+        """保存配置到文件"""
+        try:
+            config_data = {
+                "last_interface_format": llm_config["interface_format"],
+                "last_embedding_interface_format": embedding_config["interface_format"],
+                "llm_configs": {
+                    llm_config["interface_format"]: {
+                        "api_key": llm_config["api_key"],
+                        "base_url": llm_config["base_url"],
+                        "model_name": llm_config["model_name"],
+                        "temperature": llm_config["temperature"],
+                        "max_tokens": llm_config["max_tokens"],
+                        "timeout": llm_config["timeout"]
+                    }
+                },
+                "embedding_configs": {
+                    embedding_config["interface_format"]: {
+                        "api_key": embedding_config["api_key"],
+                        "base_url": embedding_config["base_url"],
+                        "model_name": embedding_config["model_name"],
+                        "retrieval_k": embedding_config["retrieval_k"]
+                    }
+                },
+                "other_params": novel_params
+            }
+
+            success = save_config(config_data, self.config_file)
+            if success:
+                self.loaded_config = config_data
+                return "✅ 配置保存成功！"
+            else:
+                return "❌ 配置保存失败！"
+        except Exception as e:
+            return f"❌ 保存配置时出错: {str(e)}"
+
+    def load_config_from_file(self):
+        """从文件加载配置"""
+        try:
+            cfg = load_config(self.config_file)
+            if not cfg:
+                return None, "未找到配置文件"
+
+            # 提取LLM配置
+            last_llm = cfg.get("last_interface_format", "OpenAI")
+            llm_configs = cfg.get("llm_configs", {})
+            llm_config = llm_configs.get(last_llm, {})
+
+            # 提取Embedding配置
+            last_embedding = cfg.get("last_embedding_interface_format", "OpenAI")
+            embedding_configs = cfg.get("embedding_configs", {})
+            embedding_config = embedding_configs.get(last_embedding, {})
+
+            # 提取其他参数
+            other_params = cfg.get("other_params", {})
+
+            return {
+                "llm_interface": last_llm,
+                "llm_api_key": llm_config.get("api_key", ""),
+                "llm_base_url": llm_config.get("base_url", "https://api.openai.com/v1"),
+                "llm_model": llm_config.get("model_name", "gpt-4o-mini"),
+                "temperature": llm_config.get("temperature", 0.7),
+                "max_tokens": llm_config.get("max_tokens", 8192),
+                "timeout": llm_config.get("timeout", 600),
+                "embedding_interface": last_embedding,
+                "embedding_api_key": embedding_config.get("api_key", ""),
+                "embedding_base_url": embedding_config.get("base_url", "https://api.openai.com/v1"),
+                "embedding_model": embedding_config.get("model_name", "text-embedding-ada-002"),
+                "retrieval_k": embedding_config.get("retrieval_k", 4),
+                "topic": other_params.get("topic", ""),
+                "genre": other_params.get("genre", "玄幻"),
+                "num_chapters": other_params.get("num_chapters", 10),
+                "word_number": other_params.get("word_number", 3000),
+                "filepath": other_params.get("filepath", ""),
+                "user_guidance": other_params.get("user_guidance", ""),
+                "characters_involved": other_params.get("characters_involved", ""),
+                "key_items": other_params.get("key_items", ""),
+                "scene_location": other_params.get("scene_location", ""),
+                "time_constraint": other_params.get("time_constraint", "")
+            }, "✅ 配置加载成功！"
+        except Exception as e:
+            return None, f"❌ 加载配置时出错: {str(e)}"
+
+# 创建全局应用实例
+app = NovelGeneratorWebApp()
+
+def create_interface():
+    """创建Gradio界面"""
+
+    # 定义LLM接口选项
+    llm_interfaces = ["OpenAI", "DeepSeek", "Azure OpenAI", "Azure AI", "Ollama",
+                     "ML Studio", "Gemini", "阿里云百炼", "火山引擎", "硅基流动"]
+
+    # 定义类型选项
+    genres = ["玄幻", "仙侠", "都市", "历史", "科幻", "军事", "游戏", "体育", "悬疑", "其他"]
+
+    with gr.Blocks(title="AI小说生成器", theme=gr.themes.Soft()) as demo:
+        gr.Markdown("# 🎯 AI小说生成器 Web版")
+        gr.Markdown("基于大语言模型的智能小说创作工具")
+
+        # 主要状态变量
+        log_state = gr.State("")
+
+        with gr.Tabs() as tabs:
+            # Tab 1: 主要功能
+            with gr.Tab("📝 主要功能", id="main"):
+                with gr.Row():
+                    with gr.Column(scale=2):
+                        # 左侧：章节内容和操作按钮
+                        gr.Markdown("### 📖 当前章节内容")
+                        chapter_content = gr.Textbox(
+                            label="章节内容（可编辑）",
+                            lines=15,
+                            max_lines=20,
+                            placeholder="生成的章节内容将显示在这里...",
+                            interactive=True
+                        )
+
+                        # Step按钮区域
+                        gr.Markdown("### 🚀 生成流程")
+                        with gr.Row():
+                            btn_step1 = gr.Button("Step1. 生成架构", variant="primary")
+                            btn_step2 = gr.Button("Step2. 生成目录", variant="primary")
+                            btn_step3 = gr.Button("Step3. 生成草稿", variant="primary")
+                            btn_step4 = gr.Button("Step4. 定稿章节", variant="primary")
+
+                        # 辅助功能按钮
+                        gr.Markdown("### 🔧 辅助功能")
+                        with gr.Row():
+                            btn_consistency = gr.Button("一致性检查")
+                            btn_import_knowledge = gr.Button("导入知识库")
+                            btn_clear_vectorstore = gr.Button("清空向量库", variant="stop")
+                            btn_plot_arcs = gr.Button("查看剧情要点")
+
+                        # 日志区域
+                        gr.Markdown("### 📋 输出日志")
+                        log_output = gr.Textbox(
+                            label="系统日志",
+                            lines=8,
+                            max_lines=10,
+                            interactive=False,
+                            value=""
+                        )
+
+                    with gr.Column(scale=1):
+                        # 右侧：配置和参数
+                        gr.Markdown("### ⚙️ 快速配置")
+
+                        # 文件路径设置
+                        filepath_input = gr.Textbox(
+                            label="保存路径",
+                            placeholder="请输入小说文件保存路径",
+                            value=""
+                        )
+
+                        # 章节号设置
+                        chapter_num_input = gr.Number(
+                            label="当前章节号",
+                            value=1,
+                            minimum=1,
+                            step=1
+                        )
+
+                        # 本章指导
+                        user_guidance_input = gr.Textbox(
+                            label="本章指导",
+                            lines=3,
+                            placeholder="对本章剧情的期望或提示..."
+                        )
+
+                        # 配置加载/保存按钮
+                        with gr.Row():
+                            btn_load_config = gr.Button("加载配置")
+                            btn_save_config = gr.Button("保存配置")
+
+            # Tab 2: 详细配置
+            with gr.Tab("🔧 模型配置", id="config"):
+                with gr.Row():
+                    with gr.Column():
+                        gr.Markdown("### 🤖 LLM模型设置")
+                        llm_interface = gr.Dropdown(
+                            choices=llm_interfaces,
+                            label="接口类型",
+                            value="OpenAI"
+                        )
+                        llm_api_key = gr.Textbox(
+                            label="API Key",
+                            type="password",
+                            placeholder="请输入API密钥"
+                        )
+                        llm_base_url = gr.Textbox(
+                            label="Base URL",
+                            value="https://api.openai.com/v1",
+                            placeholder="API基础URL"
+                        )
+                        llm_model = gr.Textbox(
+                            label="模型名称",
+                            value="gpt-4o-mini",
+                            placeholder="模型名称"
+                        )
+
+                        with gr.Row():
+                            temperature = gr.Slider(
+                                label="Temperature",
+                                minimum=0.0,
+                                maximum=2.0,
+                                value=0.7,
+                                step=0.1
+                            )
+                            max_tokens = gr.Number(
+                                label="Max Tokens",
+                                value=8192,
+                                minimum=1
+                            )
+                            timeout = gr.Number(
+                                label="Timeout (秒)",
+                                value=600,
+                                minimum=1
+                            )
+
+                        btn_test_llm = gr.Button("测试LLM配置", variant="secondary")
+
+                    with gr.Column():
+                        gr.Markdown("### 🔍 Embedding模型设置")
+                        embedding_interface = gr.Dropdown(
+                            choices=llm_interfaces,
+                            label="接口类型",
+                            value="OpenAI"
+                        )
+                        embedding_api_key = gr.Textbox(
+                            label="API Key",
+                            type="password",
+                            placeholder="请输入API密钥"
+                        )
+                        embedding_base_url = gr.Textbox(
+                            label="Base URL",
+                            value="https://api.openai.com/v1",
+                            placeholder="API基础URL"
+                        )
+                        embedding_model = gr.Textbox(
+                            label="模型名称",
+                            value="text-embedding-ada-002",
+                            placeholder="Embedding模型名称"
+                        )
+                        retrieval_k = gr.Number(
+                            label="检索数量 (K)",
+                            value=4,
+                            minimum=1,
+                            maximum=20
+                        )
+
+                        btn_test_embedding = gr.Button("测试Embedding配置", variant="secondary")
+
+            # Tab 3: 小说参数
+            with gr.Tab("📚 小说参数", id="params"):
+                with gr.Column():
+                    gr.Markdown("### 📖 基本设置")
+
+                    topic_input = gr.Textbox(
+                        label="主题 (Topic)",
+                        lines=3,
+                        placeholder="请描述小说的主题和背景...",
+                        value=""
+                    )
+
+                    with gr.Row():
+                        genre_input = gr.Dropdown(
+                            choices=genres,
+                            label="类型",
+                            value="玄幻"
+                        )
+                        num_chapters_input = gr.Number(
+                            label="章节数",
+                            value=10,
+                            minimum=1
+                        )
+                        word_number_input = gr.Number(
+                            label="每章字数",
+                            value=3000,
+                            minimum=100
+                        )
+
+                    gr.Markdown("### 🎭 可选元素")
+
+                    characters_involved_input = gr.Textbox(
+                        label="核心人物",
+                        lines=2,
+                        placeholder="描述主要角色..."
+                    )
+
+                    with gr.Row():
+                        key_items_input = gr.Textbox(
+                            label="关键道具",
+                            placeholder="重要物品或道具..."
+                        )
+                        scene_location_input = gr.Textbox(
+                            label="空间坐标",
+                            placeholder="主要场景位置..."
+                        )
+                        time_constraint_input = gr.Textbox(
+                            label="时间压力",
+                            placeholder="时间相关的约束..."
+                        )
+
+            # Tab 4: 文件管理
+            with gr.Tab("📁 文件管理", id="files"):
+                with gr.Tabs():
+                    with gr.Tab("小说架构"):
+                        with gr.Row():
+                            btn_load_architecture = gr.Button("加载 Novel_architecture.txt")
+                            btn_save_architecture = gr.Button("保存修改")
+                        architecture_content = gr.Textbox(
+                            label="小说架构内容",
+                            lines=20,
+                            placeholder="小说架构内容将显示在这里...",
+                            interactive=True
+                        )
+
+                    with gr.Tab("章节蓝图"):
+                        with gr.Row():
+                            btn_load_blueprint = gr.Button("加载 Novel_directory.txt")
+                            btn_save_blueprint = gr.Button("保存修改")
+                        blueprint_content = gr.Textbox(
+                            label="章节蓝图内容",
+                            lines=20,
+                            placeholder="章节蓝图内容将显示在这里...",
+                            interactive=True
+                        )
+
+                    with gr.Tab("角色状态"):
+                        with gr.Row():
+                            btn_load_character = gr.Button("加载 character_state.txt")
+                            btn_save_character = gr.Button("保存修改")
+                        character_content = gr.Textbox(
+                            label="角色状态内容",
+                            lines=20,
+                            placeholder="角色状态内容将显示在这里...",
+                            interactive=True
+                        )
+
+                    with gr.Tab("全局摘要"):
+                        with gr.Row():
+                            btn_load_summary = gr.Button("加载 global_summary.txt")
+                            btn_save_summary = gr.Button("保存修改")
+                        summary_content = gr.Textbox(
+                            label="全局摘要内容",
+                            lines=20,
+                            placeholder="全局摘要内容将显示在这里...",
+                            interactive=True
+                        )
+
+        return demo, {
+            # 返回所有组件的引用，用于后续的事件绑定
+            "chapter_content": chapter_content,
+            "log_output": log_output,
+            "filepath_input": filepath_input,
+            "chapter_num_input": chapter_num_input,
+            "user_guidance_input": user_guidance_input,
+            "llm_interface": llm_interface,
+            "llm_api_key": llm_api_key,
+            "llm_base_url": llm_base_url,
+            "llm_model": llm_model,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "timeout": timeout,
+            "embedding_interface": embedding_interface,
+            "embedding_api_key": embedding_api_key,
+            "embedding_base_url": embedding_base_url,
+            "embedding_model": embedding_model,
+            "retrieval_k": retrieval_k,
+            "topic_input": topic_input,
+            "genre_input": genre_input,
+            "num_chapters_input": num_chapters_input,
+            "word_number_input": word_number_input,
+            "characters_involved_input": characters_involved_input,
+            "key_items_input": key_items_input,
+            "scene_location_input": scene_location_input,
+            "time_constraint_input": time_constraint_input,
+            "btn_step1": btn_step1,
+            "btn_step2": btn_step2,
+            "btn_step3": btn_step3,
+            "btn_step4": btn_step4,
+            "btn_consistency": btn_consistency,
+            "btn_import_knowledge": btn_import_knowledge,
+            "btn_clear_vectorstore": btn_clear_vectorstore,
+            "btn_plot_arcs": btn_plot_arcs,
+            "btn_load_config": btn_load_config,
+            "btn_save_config": btn_save_config,
+            "btn_test_llm": btn_test_llm,
+            "btn_test_embedding": btn_test_embedding,
+            "architecture_content": architecture_content,
+            "blueprint_content": blueprint_content,
+            "character_content": character_content,
+            "summary_content": summary_content,
+            "btn_load_architecture": btn_load_architecture,
+            "btn_save_architecture": btn_save_architecture,
+            "btn_load_blueprint": btn_load_blueprint,
+            "btn_save_blueprint": btn_save_blueprint,
+            "btn_load_character": btn_load_character,
+            "btn_save_character": btn_save_character,
+            "btn_load_summary": btn_load_summary,
+            "btn_save_summary": btn_save_summary
+        }
+
+# 事件处理函数
+def handle_load_config():
+    """处理加载配置事件"""
+    config_data, message = app.load_config_from_file()
+    if config_data:
+        return (
+            config_data["llm_interface"],
+            config_data["llm_api_key"],
+            config_data["llm_base_url"],
+            config_data["llm_model"],
+            config_data["temperature"],
+            config_data["max_tokens"],
+            config_data["timeout"],
+            config_data["embedding_interface"],
+            config_data["embedding_api_key"],
+            config_data["embedding_base_url"],
+            config_data["embedding_model"],
+            config_data["retrieval_k"],
+            config_data["topic"],
+            config_data["genre"],
+            config_data["num_chapters"],
+            config_data["word_number"],
+            config_data["filepath"],
+            config_data["user_guidance"],
+            config_data["characters_involved"],
+            config_data["key_items"],
+            config_data["scene_location"],
+            config_data["time_constraint"],
+            message
+        )
+    else:
+        return (
+            "OpenAI", "", "https://api.openai.com/v1", "gpt-4o-mini", 0.7, 8192, 600,
+            "OpenAI", "", "https://api.openai.com/v1", "text-embedding-ada-002", 4,
+            "", "玄幻", 10, 3000, "", "", "", "", "", "",
+            message
+        )
+
+def handle_save_config(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
+                      embedding_interface, embedding_api_key, embedding_base_url, embedding_model, retrieval_k,
+                      topic, genre, num_chapters, word_number, filepath, user_guidance,
+                      characters_involved, key_items, scene_location, time_constraint):
+    """处理保存配置事件"""
+    llm_config = app.get_llm_config_from_form(
+        llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout
+    )
+    embedding_config = app.get_embedding_config_from_form(
+        embedding_interface, embedding_api_key, embedding_base_url, embedding_model, retrieval_k
+    )
+    novel_params = {
+        "topic": topic,
+        "genre": genre,
+        "num_chapters": num_chapters,
+        "word_number": word_number,
+        "filepath": filepath,
+        "user_guidance": user_guidance,
+        "characters_involved": characters_involved,
+        "key_items": key_items,
+        "scene_location": scene_location,
+        "time_constraint": time_constraint
+    }
+
+    return app.save_config_to_file(llm_config, embedding_config, novel_params)
+
+def handle_test_llm_config(interface_format, api_key, base_url, model_name, temperature, max_tokens, timeout):
+    """处理测试LLM配置事件"""
+    try:
+        llm_adapter = create_llm_adapter(
+            interface_format=interface_format,
+            base_url=base_url,
+            model_name=model_name,
+            api_key=api_key,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout=timeout
+        )
+
+        test_prompt = "Please reply 'OK'"
+        response = llm_adapter.invoke(test_prompt)
+        if response:
+            return f"✅ LLM配置测试成功！\n测试回复: {response}"
+        else:
+            return "❌ LLM配置测试失败：未获取到响应"
+    except Exception as e:
+        return f"❌ LLM配置测试出错: {str(e)}"
+
+def handle_test_embedding_config(interface_format, api_key, base_url, model_name):
+    """处理测试Embedding配置事件"""
+    try:
+        embedding_adapter = create_embedding_adapter(
+            interface_format=interface_format,
+            api_key=api_key,
+            base_url=base_url,
+            model_name=model_name
+        )
+
+        test_text = "测试文本"
+        embeddings = embedding_adapter.embed_query(test_text)
+        if embeddings and len(embeddings) > 0:
+            return f"✅ Embedding配置测试成功！\n生成的向量维度: {len(embeddings)}"
+        else:
+            return "❌ Embedding配置测试失败：未获取到向量"
+    except Exception as e:
+        return f"❌ Embedding配置测试出错: {str(e)}"
+
+def handle_load_file(filepath, filename):
+    """处理文件加载事件"""
+    if not filepath:
+        return "", "❌ 请先设置保存文件路径"
+
+    full_path = os.path.join(filepath, filename)
+    content = read_file(full_path)
+    if content:
+        return content, f"✅ 已加载 {filename}"
+    else:
+        return "", f"❌ 无法加载 {filename}"
+
+def handle_save_file(filepath, filename, content):
+    """处理文件保存事件"""
+    if not filepath:
+        return "❌ 请先设置保存文件路径"
+
+    full_path = os.path.join(filepath, filename)
+    try:
+        clear_file_content(full_path)
+        save_string_to_txt(content, full_path)
+        return f"✅ 已保存 {filename}"
+    except Exception as e:
+        return f"❌ 保存 {filename} 时出错: {str(e)}"
+
+# 核心生成功能处理函数
+def handle_generate_architecture(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
+                                topic, genre, num_chapters, word_number, filepath, user_guidance, current_log):
+    """处理生成小说架构事件"""
+    if not filepath:
+        return current_log + app.log_message("❌ 请先设置保存文件路径")
+
+    if not topic.strip():
+        return current_log + app.log_message("❌ 请先输入小说主题")
+
+    try:
+        log_msg = current_log + app.log_message("🚀 开始生成小说架构...")
+
+        # 在后台线程中执行生成
+        def generate_task():
+            try:
+                Novel_architecture_generate(
+                    interface_format=llm_interface,
+                    api_key=llm_api_key,
+                    base_url=llm_base_url,
+                    llm_model=llm_model,
+                    topic=topic,
+                    genre=genre,
+                    number_of_chapters=int(num_chapters),
+                    word_number=int(word_number),
+                    filepath=filepath,
+                    user_guidance=user_guidance,
+                    temperature=temperature,
+                    max_tokens=int(max_tokens),
+                    timeout=int(timeout)
+                )
+                return "✅ 小说架构生成完成！"
+            except Exception as e:
+                return f"❌ 生成小说架构时出错: {str(e)}"
+
+        # 这里简化处理，实际应该使用异步或进度条
+        result = generate_task()
+        return log_msg + app.log_message(result)
+
+    except Exception as e:
+        return current_log + app.log_message(f"❌ 生成小说架构时出错: {str(e)}")
+
+def handle_generate_blueprint(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
+                             filepath, current_log):
+    """处理生成章节蓝图事件"""
+    if not filepath:
+        return current_log + app.log_message("❌ 请先设置保存文件路径")
+
+    try:
+        log_msg = current_log + app.log_message("🚀 开始生成章节蓝图...")
+
+        def generate_task():
+            try:
+                Chapter_blueprint_generate(
+                    interface_format=llm_interface,
+                    api_key=llm_api_key,
+                    base_url=llm_base_url,
+                    llm_model=llm_model,
+                    filepath=filepath,
+                    temperature=temperature,
+                    max_tokens=int(max_tokens),
+                    timeout=int(timeout)
+                )
+                return "✅ 章节蓝图生成完成！"
+            except Exception as e:
+                return f"❌ 生成章节蓝图时出错: {str(e)}"
+
+        result = generate_task()
+        return log_msg + app.log_message(result)
+
+    except Exception as e:
+        return current_log + app.log_message(f"❌ 生成章节蓝图时出错: {str(e)}")
+
+def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
+                                 embedding_interface, embedding_api_key, embedding_base_url, embedding_model, retrieval_k,
+                                 filepath, chapter_num, user_guidance, current_log):
+    """处理生成章节草稿事件"""
+    if not filepath:
+        return "", current_log + app.log_message("❌ 请先设置保存文件路径")
+
+    try:
+        log_msg = current_log + app.log_message(f"🚀 开始生成第{chapter_num}章草稿...")
+
+        def generate_task():
+            try:
+                result = generate_chapter_draft(
+                    interface_format=llm_interface,
+                    api_key=llm_api_key,
+                    base_url=llm_base_url,
+                    llm_model=llm_model,
+                    embedding_interface_format=embedding_interface,
+                    embedding_api_key=embedding_api_key,
+                    embedding_base_url=embedding_base_url,
+                    embedding_model_name=embedding_model,
+                    retrieval_k=int(retrieval_k),
+                    filepath=filepath,
+                    chapter_num=int(chapter_num),
+                    user_guidance=user_guidance,
+                    temperature=temperature,
+                    max_tokens=int(max_tokens),
+                    timeout=int(timeout)
+                )
+
+                # 读取生成的章节内容
+                chapter_file = os.path.join(filepath, f"chapter_{chapter_num}.txt")
+                chapter_content = read_file(chapter_file)
+
+                return chapter_content, "✅ 章节草稿生成完成！"
+            except Exception as e:
+                return "", f"❌ 生成章节草稿时出错: {str(e)}"
+
+        chapter_content, result_msg = generate_task()
+        return chapter_content, log_msg + app.log_message(result_msg)
+
+    except Exception as e:
+        return "", current_log + app.log_message(f"❌ 生成章节草稿时出错: {str(e)}")
+
+def handle_finalize_chapter(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
+                           embedding_interface, embedding_api_key, embedding_base_url, embedding_model,
+                           filepath, chapter_num, chapter_content, current_log):
+    """处理定稿章节事件"""
+    if not filepath:
+        return current_log + app.log_message("❌ 请先设置保存文件路径")
+
+    if not chapter_content.strip():
+        return current_log + app.log_message("❌ 章节内容为空，无法定稿")
+
+    try:
+        log_msg = current_log + app.log_message(f"🚀 开始定稿第{chapter_num}章...")
+
+        # 先保存当前章节内容
+        chapter_file = os.path.join(filepath, f"chapter_{chapter_num}.txt")
+        save_string_to_txt(chapter_content, chapter_file)
+
+        def finalize_task():
+            try:
+                finalize_chapter(
+                    interface_format=llm_interface,
+                    api_key=llm_api_key,
+                    base_url=llm_base_url,
+                    llm_model=llm_model,
+                    embedding_interface_format=embedding_interface,
+                    embedding_api_key=embedding_api_key,
+                    embedding_base_url=embedding_base_url,
+                    embedding_model_name=embedding_model,
+                    filepath=filepath,
+                    chapter_num=int(chapter_num),
+                    temperature=temperature,
+                    max_tokens=int(max_tokens),
+                    timeout=int(timeout)
+                )
+                return "✅ 章节定稿完成！已更新全局摘要、角色状态和向量库。"
+            except Exception as e:
+                return f"❌ 定稿章节时出错: {str(e)}"
+
+        result = finalize_task()
+        return log_msg + app.log_message(result)
+
+    except Exception as e:
+        return current_log + app.log_message(f"❌ 定稿章节时出错: {str(e)}")
+
+# 辅助功能处理函数
+def handle_consistency_check(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
+                            filepath, chapter_num, current_log):
+    """处理一致性检查事件"""
+    if not filepath:
+        return current_log + app.log_message("❌ 请先设置保存文件路径")
+
+    try:
+        log_msg = current_log + app.log_message(f"🔍 开始检查第{chapter_num}章的一致性...")
+
+        def check_task():
+            try:
+                result = check_consistency(
+                    interface_format=llm_interface,
+                    api_key=llm_api_key,
+                    base_url=llm_base_url,
+                    llm_model=llm_model,
+                    filepath=filepath,
+                    chapter_num=int(chapter_num),
+                    temperature=temperature,
+                    max_tokens=int(max_tokens),
+                    timeout=int(timeout)
+                )
+                return f"✅ 一致性检查完成！\n{result}"
+            except Exception as e:
+                return f"❌ 一致性检查时出错: {str(e)}"
+
+        result = check_task()
+        return log_msg + app.log_message(result)
+
+    except Exception as e:
+        return current_log + app.log_message(f"❌ 一致性检查时出错: {str(e)}")
+
+def handle_import_knowledge(filepath, current_log):
+    """处理导入知识库事件"""
+    if not filepath:
+        return current_log + app.log_message("❌ 请先设置保存文件路径")
+
+    try:
+        log_msg = current_log + app.log_message("📚 开始导入知识库...")
+
+        # 这里简化处理，实际应该提供文件选择界面
+        knowledge_file = os.path.join(filepath, "knowledge.txt")
+        if os.path.exists(knowledge_file):
+            import_knowledge_file(knowledge_file, filepath)
+            return log_msg + app.log_message("✅ 知识库导入完成！")
+        else:
+            return log_msg + app.log_message(f"❌ 未找到知识库文件: {knowledge_file}")
+
+    except Exception as e:
+        return current_log + app.log_message(f"❌ 导入知识库时出错: {str(e)}")
+
+def handle_clear_vectorstore(filepath, current_log):
+    """处理清空向量库事件"""
+    if not filepath:
+        return current_log + app.log_message("❌ 请先设置保存文件路径")
+
+    try:
+        log_msg = current_log + app.log_message("🗑️ 开始清空向量库...")
+        clear_vector_store(filepath)
+        return log_msg + app.log_message("✅ 向量库已清空！")
+
+    except Exception as e:
+        return current_log + app.log_message(f"❌ 清空向量库时出错: {str(e)}")
+
+def handle_show_plot_arcs(filepath, current_log):
+    """处理查看剧情要点事件"""
+    if not filepath:
+        return current_log + app.log_message("❌ 请先设置保存文件路径")
+
+    try:
+        plot_arcs_file = os.path.join(filepath, "plot_arcs.txt")
+        content = read_file(plot_arcs_file)
+        if content:
+            return current_log + app.log_message(f"📖 剧情要点内容：\n{content}")
+        else:
+            return current_log + app.log_message("❌ 未找到剧情要点文件")
+
+    except Exception as e:
+        return current_log + app.log_message(f"❌ 查看剧情要点时出错: {str(e)}")
+
+def setup_event_handlers(demo, components):
+    """设置事件处理器"""
+
+    # 配置相关事件
+    components["btn_load_config"].click(
+        fn=handle_load_config,
+        outputs=[
+            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
+            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
+            components["embedding_interface"], components["embedding_api_key"], components["embedding_base_url"],
+            components["embedding_model"], components["retrieval_k"],
+            components["topic_input"], components["genre_input"], components["num_chapters_input"],
+            components["word_number_input"], components["filepath_input"], components["user_guidance_input"],
+            components["characters_involved_input"], components["key_items_input"],
+            components["scene_location_input"], components["time_constraint_input"],
+            components["log_output"]
+        ]
+    )
+
+    components["btn_save_config"].click(
+        fn=handle_save_config,
+        inputs=[
+            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
+            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
+            components["embedding_interface"], components["embedding_api_key"], components["embedding_base_url"],
+            components["embedding_model"], components["retrieval_k"],
+            components["topic_input"], components["genre_input"], components["num_chapters_input"],
+            components["word_number_input"], components["filepath_input"], components["user_guidance_input"],
+            components["characters_involved_input"], components["key_items_input"],
+            components["scene_location_input"], components["time_constraint_input"]
+        ],
+        outputs=components["log_output"]
+    )
+
+    # 测试配置事件
+    components["btn_test_llm"].click(
+        fn=handle_test_llm_config,
+        inputs=[
+            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
+            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"]
+        ],
+        outputs=components["log_output"]
+    )
+
+    components["btn_test_embedding"].click(
+        fn=handle_test_embedding_config,
+        inputs=[
+            components["embedding_interface"], components["embedding_api_key"],
+            components["embedding_base_url"], components["embedding_model"]
+        ],
+        outputs=components["log_output"]
+    )
+
+    # 核心生成功能事件
+    components["btn_step1"].click(
+        fn=handle_generate_architecture,
+        inputs=[
+            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
+            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
+            components["topic_input"], components["genre_input"], components["num_chapters_input"],
+            components["word_number_input"], components["filepath_input"], components["user_guidance_input"],
+            components["log_output"]
+        ],
+        outputs=components["log_output"]
+    )
+
+    components["btn_step2"].click(
+        fn=handle_generate_blueprint,
+        inputs=[
+            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
+            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
+            components["filepath_input"], components["log_output"]
+        ],
+        outputs=components["log_output"]
+    )
+
+    components["btn_step3"].click(
+        fn=handle_generate_chapter_draft,
+        inputs=[
+            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
+            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
+            components["embedding_interface"], components["embedding_api_key"], components["embedding_base_url"],
+            components["embedding_model"], components["retrieval_k"],
+            components["filepath_input"], components["chapter_num_input"], components["user_guidance_input"],
+            components["log_output"]
+        ],
+        outputs=[components["chapter_content"], components["log_output"]]
+    )
+
+    components["btn_step4"].click(
+        fn=handle_finalize_chapter,
+        inputs=[
+            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
+            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
+            components["embedding_interface"], components["embedding_api_key"], components["embedding_base_url"],
+            components["embedding_model"],
+            components["filepath_input"], components["chapter_num_input"], components["chapter_content"],
+            components["log_output"]
+        ],
+        outputs=components["log_output"]
+    )
+
+    # 辅助功能事件
+    components["btn_consistency"].click(
+        fn=handle_consistency_check,
+        inputs=[
+            components["llm_interface"], components["llm_api_key"], components["llm_base_url"],
+            components["llm_model"], components["temperature"], components["max_tokens"], components["timeout"],
+            components["filepath_input"], components["chapter_num_input"], components["log_output"]
+        ],
+        outputs=components["log_output"]
+    )
+
+    components["btn_import_knowledge"].click(
+        fn=handle_import_knowledge,
+        inputs=[components["filepath_input"], components["log_output"]],
+        outputs=components["log_output"]
+    )
+
+    components["btn_clear_vectorstore"].click(
+        fn=handle_clear_vectorstore,
+        inputs=[components["filepath_input"], components["log_output"]],
+        outputs=components["log_output"]
+    )
+
+    components["btn_plot_arcs"].click(
+        fn=handle_show_plot_arcs,
+        inputs=[components["filepath_input"], components["log_output"]],
+        outputs=components["log_output"]
+    )
+
+    # 文件管理事件
+    components["btn_load_architecture"].click(
+        fn=lambda filepath: handle_load_file(filepath, "Novel_architecture.txt"),
+        inputs=components["filepath_input"],
+        outputs=[components["architecture_content"], components["log_output"]]
+    )
+
+    components["btn_save_architecture"].click(
+        fn=lambda filepath, content: handle_save_file(filepath, "Novel_architecture.txt", content),
+        inputs=[components["filepath_input"], components["architecture_content"]],
+        outputs=components["log_output"]
+    )
+
+    components["btn_load_blueprint"].click(
+        fn=lambda filepath: handle_load_file(filepath, "Novel_directory.txt"),
+        inputs=components["filepath_input"],
+        outputs=[components["blueprint_content"], components["log_output"]]
+    )
+
+    components["btn_save_blueprint"].click(
+        fn=lambda filepath, content: handle_save_file(filepath, "Novel_directory.txt", content),
+        inputs=[components["filepath_input"], components["blueprint_content"]],
+        outputs=components["log_output"]
+    )
+
+    components["btn_load_character"].click(
+        fn=lambda filepath: handle_load_file(filepath, "character_state.txt"),
+        inputs=components["filepath_input"],
+        outputs=[components["character_content"], components["log_output"]]
+    )
+
+    components["btn_save_character"].click(
+        fn=lambda filepath, content: handle_save_file(filepath, "character_state.txt", content),
+        inputs=[components["filepath_input"], components["character_content"]],
+        outputs=components["log_output"]
+    )
+
+    components["btn_load_summary"].click(
+        fn=lambda filepath: handle_load_file(filepath, "global_summary.txt"),
+        inputs=components["filepath_input"],
+        outputs=[components["summary_content"], components["log_output"]]
+    )
+
+    components["btn_save_summary"].click(
+        fn=lambda filepath, content: handle_save_file(filepath, "global_summary.txt", content),
+        inputs=[components["filepath_input"], components["summary_content"]],
+        outputs=components["log_output"]
+    )
+
+if __name__ == "__main__":
+    demo, components = create_interface()
+    setup_event_handlers(demo, components)
+
+    print("🚀 启动AI小说生成器Web界面...")
+    print("📝 访问地址: http://localhost:7860")
+
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        share=False,
+        show_error=True
+    )
