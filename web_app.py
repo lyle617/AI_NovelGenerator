@@ -176,6 +176,59 @@ def create_interface():
     # 定义类型选项
     genres = ["玄幻", "仙侠", "都市", "历史", "科幻", "军事", "游戏", "体育", "悬疑", "其他"]
 
+    # 自动加载已保存的配置
+    config_data, config_message = app.load_config_from_file()
+    if config_data:
+        print(f"✅ 自动加载配置成功: {config_message}")
+        # 使用加载的配置作为默认值
+        default_llm_interface = config_data["llm_interface"]
+        default_llm_api_key = config_data["llm_api_key"]
+        default_llm_base_url = config_data["llm_base_url"]
+        default_llm_model = config_data["llm_model"]
+        default_temperature = config_data["temperature"]
+        default_max_tokens = config_data["max_tokens"]
+        default_timeout = config_data["timeout"]
+        default_embedding_interface = config_data["embedding_interface"]
+        default_embedding_api_key = config_data["embedding_api_key"]
+        default_embedding_base_url = config_data["embedding_base_url"]
+        default_embedding_model = config_data["embedding_model"]
+        default_retrieval_k = config_data["retrieval_k"]
+        default_topic = config_data["topic"]
+        default_genre = config_data["genre"]
+        default_num_chapters = config_data["num_chapters"]
+        default_word_number = config_data["word_number"]
+        default_filepath = config_data["filepath"]
+        default_user_guidance = config_data["user_guidance"]
+        default_characters_involved = config_data["characters_involved"]
+        default_key_items = config_data["key_items"]
+        default_scene_location = config_data["scene_location"]
+        default_time_constraint = config_data["time_constraint"]
+    else:
+        print(f"⚠️ 未找到配置文件，使用默认值: {config_message}")
+        # 使用默认值
+        default_llm_interface = "OpenAI"
+        default_llm_api_key = ""
+        default_llm_base_url = "https://api.openai.com/v1"
+        default_llm_model = "gpt-4o-mini"
+        default_temperature = 0.7
+        default_max_tokens = 8192
+        default_timeout = 600
+        default_embedding_interface = "OpenAI"
+        default_embedding_api_key = ""
+        default_embedding_base_url = "https://api.openai.com/v1"
+        default_embedding_model = "text-embedding-ada-002"
+        default_retrieval_k = 4
+        default_topic = ""
+        default_genre = "玄幻"
+        default_num_chapters = 10
+        default_word_number = 3000
+        default_filepath = ""
+        default_user_guidance = ""
+        default_characters_involved = ""
+        default_key_items = ""
+        default_scene_location = ""
+        default_time_constraint = ""
+
     with gr.Blocks(title="AI小说生成器", theme=gr.themes.Soft()) as demo:
         gr.Markdown("# 🎯 AI小说生成器 Web版")
         gr.Markdown("基于大语言模型的智能小说创作工具")
@@ -232,7 +285,7 @@ def create_interface():
                         filepath_input = gr.Textbox(
                             label="保存路径",
                             placeholder="请输入小说文件保存路径",
-                            value=""
+                            value=default_filepath
                         )
 
                         # 章节号设置
@@ -247,6 +300,7 @@ def create_interface():
                         user_guidance_input = gr.Textbox(
                             label="本章指导",
                             lines=3,
+                            value=default_user_guidance,
                             placeholder="对本章剧情的期望或提示..."
                         )
 
@@ -263,21 +317,22 @@ def create_interface():
                         llm_interface = gr.Dropdown(
                             choices=llm_interfaces,
                             label="接口类型",
-                            value="OpenAI"
+                            value=default_llm_interface
                         )
                         llm_api_key = gr.Textbox(
                             label="API Key",
                             type="password",
+                            value=default_llm_api_key,
                             placeholder="请输入API密钥"
                         )
                         llm_base_url = gr.Textbox(
                             label="Base URL",
-                            value="https://api.openai.com/v1",
+                            value=default_llm_base_url,
                             placeholder="API基础URL"
                         )
                         llm_model = gr.Textbox(
                             label="模型名称",
-                            value="gpt-4o-mini",
+                            value=default_llm_model,
                             placeholder="模型名称"
                         )
 
@@ -286,17 +341,17 @@ def create_interface():
                                 label="Temperature",
                                 minimum=0.0,
                                 maximum=2.0,
-                                value=0.7,
+                                value=default_temperature,
                                 step=0.1
                             )
                             max_tokens = gr.Number(
                                 label="Max Tokens",
-                                value=8192,
+                                value=default_max_tokens,
                                 minimum=1
                             )
                             timeout = gr.Number(
                                 label="Timeout (秒)",
-                                value=600,
+                                value=default_timeout,
                                 minimum=1
                             )
 
@@ -307,26 +362,27 @@ def create_interface():
                         embedding_interface = gr.Dropdown(
                             choices=llm_interfaces,
                             label="接口类型",
-                            value="OpenAI"
+                            value=default_embedding_interface
                         )
                         embedding_api_key = gr.Textbox(
                             label="API Key",
                             type="password",
+                            value=default_embedding_api_key,
                             placeholder="请输入API密钥"
                         )
                         embedding_base_url = gr.Textbox(
                             label="Base URL",
-                            value="https://api.openai.com/v1",
+                            value=default_embedding_base_url,
                             placeholder="API基础URL"
                         )
                         embedding_model = gr.Textbox(
                             label="模型名称",
-                            value="text-embedding-ada-002",
+                            value=default_embedding_model,
                             placeholder="Embedding模型名称"
                         )
                         retrieval_k = gr.Number(
                             label="检索数量 (K)",
-                            value=4,
+                            value=default_retrieval_k,
                             minimum=1,
                             maximum=20
                         )
@@ -342,23 +398,23 @@ def create_interface():
                         label="主题 (Topic)",
                         lines=3,
                         placeholder="请描述小说的主题和背景...",
-                        value=""
+                        value=default_topic
                     )
 
                     with gr.Row():
                         genre_input = gr.Dropdown(
                             choices=genres,
                             label="类型",
-                            value="玄幻"
+                            value=default_genre
                         )
                         num_chapters_input = gr.Number(
                             label="章节数",
-                            value=10,
+                            value=default_num_chapters,
                             minimum=1
                         )
                         word_number_input = gr.Number(
                             label="每章字数",
-                            value=3000,
+                            value=default_word_number,
                             minimum=100
                         )
 
@@ -367,20 +423,24 @@ def create_interface():
                     characters_involved_input = gr.Textbox(
                         label="核心人物",
                         lines=2,
+                        value=default_characters_involved,
                         placeholder="描述主要角色..."
                     )
 
                     with gr.Row():
                         key_items_input = gr.Textbox(
                             label="关键道具",
+                            value=default_key_items,
                             placeholder="重要物品或道具..."
                         )
                         scene_location_input = gr.Textbox(
                             label="空间坐标",
+                            value=default_scene_location,
                             placeholder="主要场景位置..."
                         )
                         time_constraint_input = gr.Textbox(
                             label="时间压力",
+                            value=default_time_constraint,
                             placeholder="时间相关的约束..."
                         )
 
