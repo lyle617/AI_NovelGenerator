@@ -97,6 +97,7 @@ class OpenAIAdapter(BaseLLMAdapter):
 class GeminiAdapter(BaseLLMAdapter):
     """
     适配 Google Gemini (Google Generative AI) 接口
+    使用requests直接调用API以避免SSL问题
     """
     def __init__(self, api_key: str, base_url: str, model_name: str, max_tokens: int, temperature: float = 0.7, timeout: Optional[int] = 600):
         self.api_key = api_key
@@ -104,28 +105,159 @@ class GeminiAdapter(BaseLLMAdapter):
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.timeout = timeout
+        self.base_url = base_url.rstrip("/")
 
-        # 使用新的 Google Gen AI SDK
-        self._client = genai.Client(api_key=self.api_key)
+        # 构建API端点URL
+        if "models/" not in self.model_name:
+            self.full_model_name = f"models/{self.model_name}"
+        else:
+            self.full_model_name = self.model_name
+
+        logging.info(f"Gemini适配器初始化成功，模型: {self.full_model_name}")
+
+    def _make_request(self, prompt: str) -> dict:
+        """
+        使用requests直接调用Gemini API
+        """
+        import requests
+        import json
+
+        url = f"{self.base_url}/{self.full_model_name}:generateContent"
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        params = {
+            "key": self.api_key
+        }
+
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": prompt}
+                    ]
+                }
+            ],
+            "generationConfig": {
+                "maxOutputTokens": self.max_tokens,
+                "temperature": self.temperature
+            }
+        }
+
+        # 配置requests会话以处理SSL问题
+        session = requests.Session()
+        session.verify = False  # 禁用SSL验证
+
+        # 禁用SSL警告
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+        response = session.post(
+            url,
+            json=payload,
+            headers=headers,
+            params=params,
+            timeout=self.timeout
+        )
+
+        return response
 
     def invoke(self, prompt: str) -> str:
-        try:
-            response = self._client.models.generate_content(
-                model=self.model_name,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    max_output_tokens=self.max_tokens,
-                    temperature=self.temperature,
-                ),
-            )
-            if response and response.text:
-                return response.text
-            else:
-                logging.warning("No text response from Gemini API.")
-                return ""
-        except Exception as e:
-            logging.error(f"Gemini API 调用失败: {e}")
-            return ""
+        """
+        调用Gemini API，带重试机制和详细错误信息
+        """
+        max_retries = 3
+        retry_delay = 1
+
+        for attempt in range(max_retries):
+            try:
+                logging.info(f"Gemini API调用开始 (尝试 {attempt + 1}/{max_retries})")
+                logging.debug(f"请求参数: 模型={self.full_model_name}, max_tokens={self.max_tokens}, temperature={self.temperature}")
+                logging.debug(f"提示词长度: {len(prompt)} 字符")
+
+                # 使用requests直接调用API
+                response = self._make_request(prompt)
+
+                logging.debug(f"HTTP状态码: {response.status_code}")
+                logging.debug(f"响应头: {dict(response.headers)}")
+
+                if response.status_code == 200:
+                    result = response.json()
+                    logging.debug(f"完整响应: {result}")
+
+                    # 解析响应
+                    if "candidates" in result and len(result["candidates"]) > 0:
+                        candidate = result["candidates"][0]
+                        if "content" in candidate and "parts" in candidate["content"]:
+                            parts = candidate["content"]["parts"]
+                            if len(parts) > 0 and "text" in parts[0]:
+                                text = parts[0]["text"]
+                                logging.info(f"Gemini API调用成功，返回内容长度: {len(text)} 字符")
+                                logging.debug(f"返回内容预览: {text[:200]}...")
+                                return text
+
+                    logging.warning(f"Gemini API返回了响应但格式不正确 (尝试 {attempt + 1})")
+                    logging.debug(f"完整响应: {result}")
+                else:
+                    logging.error(f"HTTP错误: {response.status_code}")
+                    logging.error(f"错误响应: {response.text}")
+
+                    # 分析具体错误
+                    if response.status_code == 401:
+                        logging.error("API密钥认证失败")
+                        return ""  # 认证错误不重试
+                    elif response.status_code == 429:
+                        logging.error("API配额限制或请求过于频繁")
+                    elif response.status_code == 400:
+                        logging.error("请求参数错误")
+                        return ""  # 参数错误不重试
+
+                # 如果不是最后一次尝试，等待后重试
+                if attempt < max_retries - 1:
+                    import time
+                    logging.info(f"等待 {retry_delay} 秒后重试...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                else:
+                    logging.error("所有重试均失败，返回空字符串")
+                    return ""
+
+            except Exception as e:
+                error_type = type(e).__name__
+                error_msg = str(e)
+
+                logging.error(f"Gemini API调用失败 (尝试 {attempt + 1}/{max_retries})")
+                logging.error(f"错误类型: {error_type}")
+                logging.error(f"错误信息: {error_msg}")
+
+                # 详细的错误分析
+                if "SSL" in error_msg or "EOF" in error_msg:
+                    logging.error("检测到SSL/网络连接问题，可能的原因:")
+                    logging.error("1. 网络连接不稳定")
+                    logging.error("2. 防火墙或代理设置问题")
+                    logging.error("3. Gemini服务器临时不可用")
+                elif "timeout" in error_msg.lower():
+                    logging.error("请求超时，可能的原因:")
+                    logging.error("1. 网络延迟过高")
+                    logging.error("2. 服务器响应慢")
+                elif "connection" in error_msg.lower():
+                    logging.error("连接错误，可能的原因:")
+                    logging.error("1. 网络连接问题")
+                    logging.error("2. DNS解析失败")
+
+                # 如果不是最后一次尝试，等待后重试
+                if attempt < max_retries - 1:
+                    import time
+                    logging.info(f"等待 {retry_delay} 秒后重试...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                else:
+                    logging.error("所有重试均失败，返回空字符串")
+                    return ""
+
+        return ""
 
 class AzureOpenAIAdapter(BaseLLMAdapter):
     """
