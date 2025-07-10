@@ -269,6 +269,13 @@ def create_interface():
         width: 100% !important;
     }
 
+    /* 确保所有标签页内容宽度一致 */
+    .gradio-tabitem {
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+    }
+
     /* 标题样式 */
     .main-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
