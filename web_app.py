@@ -231,10 +231,17 @@ def create_interface():
 
     # 创建自定义CSS样式
     custom_css = """
-    /* 全局样式 */
+    /* 全局样式 - 确保所有页面宽度一致 */
     .gradio-container {
         max-width: 1400px !important;
         margin: 0 auto !important;
+    }
+
+    /* 确保所有标签页内容宽度一致 */
+    .gradio-tabitem {
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
     }
 
     /* 标题样式 */
