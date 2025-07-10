@@ -312,82 +312,99 @@ def create_interface():
             # Tab 2: 详细配置
             with gr.Tab("🔧 模型配置", id="config"):
                 with gr.Row():
-                    with gr.Column():
-                        gr.Markdown("### 🤖 LLM模型设置")
-                        llm_interface = gr.Dropdown(
-                            choices=llm_interfaces,
-                            label="接口类型",
-                            value=default_llm_interface
-                        )
-                        llm_api_key = gr.Textbox(
-                            label="API Key",
-                            type="password",
-                            value=default_llm_api_key,
-                            placeholder="请输入API密钥"
-                        )
-                        llm_base_url = gr.Textbox(
-                            label="Base URL",
-                            value=default_llm_base_url,
-                            placeholder="API基础URL"
-                        )
-                        llm_model = gr.Textbox(
-                            label="模型名称",
-                            value=default_llm_model,
-                            placeholder="模型名称"
-                        )
-
+                    with gr.Column(scale=2):
                         with gr.Row():
-                            temperature = gr.Slider(
-                                label="Temperature",
-                                minimum=0.0,
-                                maximum=2.0,
-                                value=default_temperature,
-                                step=0.1
-                            )
-                            max_tokens = gr.Number(
-                                label="Max Tokens",
-                                value=default_max_tokens,
-                                minimum=1
-                            )
-                            timeout = gr.Number(
-                                label="Timeout (秒)",
-                                value=default_timeout,
-                                minimum=1
-                            )
+                            with gr.Column():
+                                gr.Markdown("### 🤖 LLM模型设置")
+                                llm_interface = gr.Dropdown(
+                                    choices=llm_interfaces,
+                                    label="接口类型",
+                                    value=default_llm_interface
+                                )
+                                llm_api_key = gr.Textbox(
+                                    label="API Key",
+                                    type="password",
+                                    value=default_llm_api_key,
+                                    placeholder="请输入API密钥"
+                                )
+                                llm_base_url = gr.Textbox(
+                                    label="Base URL",
+                                    value=default_llm_base_url,
+                                    placeholder="API基础URL"
+                                )
+                                llm_model = gr.Textbox(
+                                    label="模型名称",
+                                    value=default_llm_model,
+                                    placeholder="模型名称"
+                                )
 
-                        btn_test_llm = gr.Button("测试LLM配置", variant="secondary")
+                                with gr.Row():
+                                    temperature = gr.Slider(
+                                        label="Temperature",
+                                        minimum=0.0,
+                                        maximum=2.0,
+                                        value=default_temperature,
+                                        step=0.1
+                                    )
+                                    max_tokens = gr.Number(
+                                        label="Max Tokens",
+                                        value=default_max_tokens,
+                                        minimum=1
+                                    )
+                                    timeout = gr.Number(
+                                        label="Timeout (秒)",
+                                        value=default_timeout,
+                                        minimum=1
+                                    )
 
-                    with gr.Column():
-                        gr.Markdown("### 🔍 Embedding模型设置")
-                        embedding_interface = gr.Dropdown(
-                            choices=llm_interfaces,
-                            label="接口类型",
-                            value=default_embedding_interface
-                        )
-                        embedding_api_key = gr.Textbox(
-                            label="API Key",
-                            type="password",
-                            value=default_embedding_api_key,
-                            placeholder="请输入API密钥"
-                        )
-                        embedding_base_url = gr.Textbox(
-                            label="Base URL",
-                            value=default_embedding_base_url,
-                            placeholder="API基础URL"
-                        )
-                        embedding_model = gr.Textbox(
-                            label="模型名称",
-                            value=default_embedding_model,
-                            placeholder="Embedding模型名称"
-                        )
-                        retrieval_k = gr.Number(
-                            label="检索数量 (K)",
-                            value=default_retrieval_k,
-                            minimum=1,
-                            maximum=20
+                                btn_test_llm = gr.Button("测试LLM配置", variant="secondary")
+
+                            with gr.Column():
+                                gr.Markdown("### 🔍 Embedding模型设置")
+                                embedding_interface = gr.Dropdown(
+                                    choices=llm_interfaces,
+                                    label="接口类型",
+                                    value=default_embedding_interface
+                                )
+                                embedding_api_key = gr.Textbox(
+                                    label="API Key",
+                                    type="password",
+                                    value=default_embedding_api_key,
+                                    placeholder="请输入API密钥"
+                                )
+                                embedding_base_url = gr.Textbox(
+                                    label="Base URL",
+                                    value=default_embedding_base_url,
+                                    placeholder="API基础URL"
+                                )
+                                embedding_model = gr.Textbox(
+                                    label="模型名称",
+                                    value=default_embedding_model,
+                                    placeholder="Embedding模型名称"
+                                )
+                                retrieval_k = gr.Number(
+                                    label="检索数量 (K)",
+                                    value=default_retrieval_k,
+                                    minimum=1,
+                                    maximum=20
+                                )
+
+                                btn_test_embedding = gr.Button("测试Embedding配置", variant="secondary")
+
+                    with gr.Column(scale=1):
+                        # 配置测试日志区域
+                        gr.Markdown("### 📋 配置测试日志")
+                        config_log_output = gr.Textbox(
+                            label="测试日志",
+                            lines=20,
+                            max_lines=25,
+                            interactive=False,
+                            value="",
+                            placeholder="点击测试按钮查看详细日志..."
                         )
 
-                        btn_test_embedding = gr.Button("测试Embedding配置", variant="secondary")
+                        # 清空日志按钮
+                        btn_clear_config_log = gr.Button("清空日志", variant="secondary")
 
             # Tab 3: 小说参数
             with gr.Tab("📚 小说参数", id="params"):
@@ -528,18 +545,24 @@ def create_interface():
             fn=handle_test_llm_config,
             inputs=[
                 llm_interface, llm_api_key, llm_base_url,
-                llm_model, temperature, max_tokens, timeout
+                llm_model, temperature, max_tokens, timeout, config_log_output
             ],
-            outputs=log_output
+            outputs=config_log_output
         )
 
         btn_test_embedding.click(
             fn=handle_test_embedding_config,
             inputs=[
                 embedding_interface, embedding_api_key,
-                embedding_base_url, embedding_model
+                embedding_base_url, embedding_model, config_log_output
             ],
-            outputs=log_output
+            outputs=config_log_output
+        )
+
+        # 清空配置日志事件
+        btn_clear_config_log.click(
+            fn=handle_clear_config_log,
+            outputs=config_log_output
         )
 
         # 核心生成功能事件
@@ -735,9 +758,22 @@ def handle_save_config(llm_interface, llm_api_key, llm_base_url, llm_model, temp
 
     return app.save_config_to_file(llm_config, embedding_config, novel_params)
 
-def handle_test_llm_config(interface_format, api_key, base_url, model_name, temperature, max_tokens, timeout):
+def handle_test_llm_config(interface_format, api_key, base_url, model_name, temperature, max_tokens, timeout, current_log):
     """处理测试LLM配置事件"""
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+
+    log_msg = current_log + f"\n[{timestamp}] 🧪 开始测试LLM配置...\n"
+    log_msg += f"接口类型: {interface_format}\n"
+    log_msg += f"模型名称: {model_name}\n"
+    log_msg += f"Base URL: {base_url}\n"
+    log_msg += f"Temperature: {temperature}\n"
+    log_msg += f"Max Tokens: {max_tokens}\n"
+    log_msg += f"Timeout: {timeout}秒\n"
+    log_msg += "-" * 50 + "\n"
+
     try:
+        log_msg += "正在创建LLM适配器...\n"
         llm_adapter = create_llm_adapter(
             interface_format=interface_format,
             base_url=base_url,
@@ -747,34 +783,86 @@ def handle_test_llm_config(interface_format, api_key, base_url, model_name, temp
             max_tokens=max_tokens,
             timeout=timeout
         )
+        log_msg += "✅ LLM适配器创建成功\n"
 
         test_prompt = "Please reply 'OK'"
-        response = llm_adapter.invoke(test_prompt)
-        if response:
-            return f"✅ LLM配置测试成功！\n测试回复: {response}"
-        else:
-            return "❌ LLM配置测试失败：未获取到响应"
-    except Exception as e:
-        return f"❌ LLM配置测试出错: {str(e)}"
+        log_msg += f"发送测试提示: {test_prompt}\n"
+        log_msg += "等待模型响应...\n"
 
-def handle_test_embedding_config(interface_format, api_key, base_url, model_name):
+        response = llm_adapter.invoke(test_prompt)
+        if response and response.strip():
+            log_msg += f"✅ LLM配置测试成功！\n"
+            log_msg += f"模型回复: {response}\n"
+            log_msg += f"回复长度: {len(response)} 字符\n"
+        else:
+            log_msg += "❌ LLM配置测试失败：未获取到响应\n"
+            log_msg += "可能原因：\n"
+            log_msg += "1. API密钥无效\n"
+            log_msg += "2. 网络连接问题\n"
+            log_msg += "3. 模型名称错误\n"
+            log_msg += "4. 服务器暂时不可用\n"
+
+    except Exception as e:
+        log_msg += f"❌ LLM配置测试出错: {str(e)}\n"
+        log_msg += "详细错误信息:\n"
+        import traceback
+        log_msg += traceback.format_exc() + "\n"
+
+    log_msg += "=" * 50 + "\n"
+    return log_msg
+
+def handle_test_embedding_config(interface_format, api_key, base_url, model_name, current_log):
     """处理测试Embedding配置事件"""
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+
+    log_msg = current_log + f"\n[{timestamp}] 🔍 开始测试Embedding配置...\n"
+    log_msg += f"接口类型: {interface_format}\n"
+    log_msg += f"模型名称: {model_name}\n"
+    log_msg += f"Base URL: {base_url}\n"
+    log_msg += "-" * 50 + "\n"
+
     try:
+        log_msg += "正在创建Embedding适配器...\n"
         embedding_adapter = create_embedding_adapter(
             interface_format=interface_format,
             api_key=api_key,
             base_url=base_url,
             model_name=model_name
         )
+        log_msg += "✅ Embedding适配器创建成功\n"
 
-        test_text = "测试文本"
+        test_text = "这是一个测试文本"
+        log_msg += f"测试文本: {test_text}\n"
+        log_msg += "正在生成向量...\n"
+
         embeddings = embedding_adapter.embed_query(test_text)
         if embeddings and len(embeddings) > 0:
-            return f"✅ Embedding配置测试成功！\n生成的向量维度: {len(embeddings)}"
+            log_msg += f"✅ Embedding配置测试成功！\n"
+            log_msg += f"生成的向量维度: {len(embeddings)}\n"
+            log_msg += f"向量前5个值: {embeddings[:5]}\n"
         else:
-            return "❌ Embedding配置测试失败：未获取到向量"
+            log_msg += "❌ Embedding配置测试失败：未获取到向量\n"
+            log_msg += "可能原因：\n"
+            log_msg += "1. API密钥无效\n"
+            log_msg += "2. 模型名称错误\n"
+            log_msg += "3. 网络连接问题\n"
+            log_msg += "4. 服务不支持该模型\n"
+
     except Exception as e:
-        return f"❌ Embedding配置测试出错: {str(e)}"
+        log_msg += f"❌ Embedding配置测试出错: {str(e)}\n"
+        log_msg += "详细错误信息:\n"
+        import traceback
+        log_msg += traceback.format_exc() + "\n"
+
+    log_msg += "=" * 50 + "\n"
+    return log_msg
+
+def handle_clear_config_log():
+    """清空配置日志"""
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    return f"[{timestamp}] 📋 配置测试日志已清空\n"
 
 def handle_load_file(filepath, filename):
     """处理文件加载事件"""

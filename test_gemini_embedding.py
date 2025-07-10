@@ -143,6 +143,47 @@ def test_gemini_embedding():
 
     return False
 
+def test_web_interface_logging():
+    """测试Web界面的日志功能"""
+    print("\n🌐 测试Web界面日志功能")
+    print("-" * 50)
+
+    # 模拟Web界面的测试函数
+    from web_app import handle_test_llm_config, handle_test_embedding_config
+
+    # 测试参数
+    api_key = "AIzaSyCp1LrhhP9zAlS_VgCCaw517OFz-4vDCAg"
+    base_url = "https://generativelanguage.googleapis.com/v1beta"
+    model_name = "gemini-1.5-flash"
+
+    print("测试LLM配置日志输出...")
+    current_log = ""
+    log_result = handle_test_llm_config(
+        interface_format="Gemini",
+        api_key=api_key,
+        base_url=base_url,
+        model_name=model_name,
+        temperature=0.7,
+        max_tokens=100,
+        timeout=30,
+        current_log=current_log
+    )
+
+    print("LLM测试日志:")
+    print(log_result)
+
+    print("\n测试Embedding配置日志输出...")
+    embedding_log = handle_test_embedding_config(
+        interface_format="Gemini",
+        api_key=api_key,
+        base_url=base_url,
+        model_name="text-embedding-004",
+        current_log=""
+    )
+
+    print("Embedding测试日志:")
+    print(embedding_log)
+
 def main():
     """主测试函数"""
     print("🔍 Gemini配置诊断工具")
@@ -156,6 +197,9 @@ def main():
 
     # 3. Embedding测试
     embedding_success = test_gemini_embedding()
+
+    # 4. Web界面日志测试
+    test_web_interface_logging()
 
     # 总结
     print("\n" + "="*60)
@@ -171,6 +215,12 @@ def main():
         print("4. 验证API密钥是否正确且有效")
         print("5. 确认Gemini API在你的地区可用")
         print("6. 尝试降低请求频率")
+
+    print("\n🌐 Web界面使用说明:")
+    print("1. 启动Web界面后，进入'模型配置'标签页")
+    print("2. 右侧现在有专用的'配置测试日志'窗口")
+    print("3. 点击'测试LLM配置'或'测试Embedding配置'查看详细日志")
+    print("4. 可以点击'清空日志'按钮清除历史记录")
 
 if __name__ == "__main__":
     main()
