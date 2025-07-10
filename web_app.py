@@ -231,10 +231,42 @@ def create_interface():
 
     # 创建自定义CSS样式
     custom_css = """
-    /* 全局样式 */
+    /* 全局样式 - 确保所有页面宽度一致 */
     .gradio-container {
         max-width: 1400px !important;
         margin: 0 auto !important;
+        padding: 0 1rem !important;
+    }
+
+    /* 确保所有标签页内容宽度一致 */
+    .tab-content {
+        width: 100% !important;
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+        padding: 1rem !important;
+    }
+
+    /* 标签页容器 */
+    .gradio-tabs {
+        width: 100% !important;
+    }
+
+    .gradio-tabitem {
+        width: 100% !important;
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+        padding: 1rem !important;
+    }
+
+    /* 行和列的一致性 */
+    .gradio-row {
+        width: 100% !important;
+        margin: 0 !important;
+        gap: 1rem !important;
+    }
+
+    .gradio-column {
+        width: 100% !important;
     }
 
     /* 标题样式 */
@@ -246,6 +278,10 @@ def create_interface():
         margin-bottom: 2rem;
         text-align: center;
         box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        width: 100% !important;
+        max-width: 1400px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
 
     .main-title {
@@ -270,6 +306,7 @@ def create_interface():
         box-shadow: 0 4px 16px rgba(0,0,0,0.1);
         border: 1px solid #e1e5e9;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
+        width: 100% !important;
     }
 
     .feature-card:hover {
@@ -316,6 +353,19 @@ def create_interface():
         padding: 1.5rem;
         margin: 1rem 0;
         border-left: 4px solid #667eea;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 文本框和输入组件统一宽度 */
+    .gradio-textbox, .gradio-dropdown, .gradio-number, .gradio-slider {
+        width: 100% !important;
+    }
+
+    /* 确保所有输入组件容器宽度一致 */
+    .gradio-form > * {
+        width: 100% !important;
+        margin-bottom: 1rem !important;
     }
 
     /* 状态指示器 */
@@ -331,11 +381,51 @@ def create_interface():
     .status-warning { background-color: #ffc107; }
     .status-error { background-color: #dc3545; }
 
+    /* 确保按钮容器宽度一致 */
+    .gradio-button {
+        width: 100% !important;
+        margin: 0.5rem 0 !important;
+    }
+
+    /* 日志容器样式统一 */
+    .log-container {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
     /* 响应式设计 */
     @media (max-width: 768px) {
-        .main-title { font-size: 2rem; }
-        .main-subtitle { font-size: 1rem; }
-        .feature-card { margin: 0.5rem 0; padding: 1rem; }
+        .gradio-container {
+            max-width: 100% !important;
+            padding: 0 0.5rem !important;
+        }
+
+        .main-header {
+            padding: 1.5rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .main-title {
+            font-size: 2rem !important;
+        }
+
+        .main-subtitle {
+            font-size: 1rem !important;
+        }
+
+        .feature-card {
+            margin: 0.5rem 0 !important;
+            padding: 1rem !important;
+        }
+
+        .config-section {
+            padding: 1rem !important;
+            margin: 0.5rem 0 !important;
+        }
+
+        .gradio-tabitem {
+            padding: 0.5rem !important;
+        }
     }
     """
 
@@ -372,20 +462,21 @@ def create_interface():
         with gr.Tabs() as tabs:
             # Tab 0: 欢迎页面
             with gr.Tab("🏠 欢迎", id="welcome"):
-                with gr.Row():
-                    with gr.Column(scale=2):
-                        gr.HTML("""
-                        <div class="feature-card">
-                            <h2>🚀 快速开始</h2>
-                            <p>欢迎使用AI小说生成器！按照以下步骤开始您的创作之旅：</p>
-                            <ol style="line-height: 1.8;">
-                                <li><strong>配置模型</strong> - 前往"模型配置"页面设置您的AI模型</li>
-                                <li><strong>设置参数</strong> - 在"小说参数"页面填写小说基本信息</li>
-                                <li><strong>开始创作</strong> - 在"主要功能"页面按步骤生成小说</li>
-                                <li><strong>管理文件</strong> - 使用"文件管理"页面查看和编辑内容</li>
-                            </ol>
-                        </div>
-                        """)
+                with gr.Column(elem_classes=["tab-content"]):
+                    with gr.Row():
+                        with gr.Column(scale=2):
+                            gr.HTML("""
+                            <div class="feature-card">
+                                <h2>🚀 快速开始</h2>
+                                <p>欢迎使用AI小说生成器！按照以下步骤开始您的创作之旅：</p>
+                                <ol style="line-height: 1.8;">
+                                    <li><strong>配置模型</strong> - 前往"模型配置"页面设置您的AI模型</li>
+                                    <li><strong>设置参数</strong> - 在"小说参数"页面填写小说基本信息</li>
+                                    <li><strong>开始创作</strong> - 在"主要功能"页面按步骤生成小说</li>
+                                    <li><strong>管理文件</strong> - 使用"文件管理"页面查看和编辑内容</li>
+                                </ol>
+                            </div>
+                            """)
 
                         with gr.Row():
                             with gr.Column():
@@ -456,15 +547,16 @@ def create_interface():
 
             # Tab 1: 主要功能
             with gr.Tab("📝 主要功能", id="main"):
-                with gr.Row():
-                    with gr.Column(scale=2):
-                        # 章节内容区域
-                        gr.HTML("""
-                        <div class="config-section">
-                            <h3>📖 当前章节内容</h3>
-                            <p>在这里查看和编辑生成的章节内容</p>
-                        </div>
-                        """)
+                with gr.Column(elem_classes=["tab-content"]):
+                    with gr.Row():
+                        with gr.Column(scale=2):
+                            # 章节内容区域
+                            gr.HTML("""
+                            <div class="config-section">
+                                <h3>📖 当前章节内容</h3>
+                                <p>在这里查看和编辑生成的章节内容</p>
+                            </div>
+                            """)
                         chapter_content = gr.Textbox(
                             label="章节内容（可编辑）",
                             lines=15,
@@ -600,16 +692,17 @@ def create_interface():
 
             # Tab 2: 详细配置
             with gr.Tab("🔧 模型配置", id="config"):
-                with gr.Row():
-                    with gr.Column(scale=2):
-                        with gr.Row():
-                            with gr.Column():
-                                gr.HTML("""
-                                <div class="config-section">
-                                    <h3>🤖 LLM模型设置</h3>
-                                    <p>配置用于文本生成的大语言模型</p>
-                                </div>
-                                """)
+                with gr.Column(elem_classes=["tab-content"]):
+                    with gr.Row():
+                        with gr.Column(scale=2):
+                            with gr.Row():
+                                with gr.Column():
+                                    gr.HTML("""
+                                    <div class="config-section">
+                                        <h3>🤖 LLM模型设置</h3>
+                                        <p>配置用于文本生成的大语言模型</p>
+                                    </div>
+                                    """)
                                 llm_interface = gr.Dropdown(
                                     choices=llm_interfaces,
                                     label="🔌 接口类型",
@@ -770,7 +863,7 @@ def create_interface():
 
             # Tab 3: 小说参数
             with gr.Tab("📚 小说参数", id="params"):
-                with gr.Column():
+                with gr.Column(elem_classes=["tab-content"]):
                     gr.Markdown("### 📖 基本设置")
 
                     topic_input = gr.Textbox(
@@ -825,11 +918,12 @@ def create_interface():
 
             # Tab 4: 文件管理
             with gr.Tab("📁 文件管理", id="files"):
-                with gr.Tabs():
-                    with gr.Tab("小说架构"):
-                        with gr.Row():
-                            btn_load_architecture = gr.Button("加载 Novel_architecture.txt")
-                            btn_save_architecture = gr.Button("保存修改")
+                with gr.Column(elem_classes=["tab-content"]):
+                    with gr.Tabs():
+                        with gr.Tab("小说架构"):
+                            with gr.Row():
+                                btn_load_architecture = gr.Button("加载 Novel_architecture.txt")
+                                btn_save_architecture = gr.Button("保存修改")
                         architecture_content = gr.Textbox(
                             label="小说架构内容",
                             lines=20,
