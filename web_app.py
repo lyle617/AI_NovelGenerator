@@ -229,85 +229,374 @@ def create_interface():
         default_scene_location = ""
         default_time_constraint = ""
 
-    with gr.Blocks(title="AI小说生成器", theme=gr.themes.Soft()) as demo:
-        gr.Markdown("# 🎯 AI小说生成器 Web版")
-        gr.Markdown("基于大语言模型的智能小说创作工具")
+    # 创建自定义CSS样式
+    custom_css = """
+    /* 全局样式 */
+    .gradio-container {
+        max-width: 1400px !important;
+        margin: 0 auto !important;
+    }
+
+    /* 标题样式 */
+    .main-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    }
+
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .main-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin-bottom: 1rem;
+    }
+
+    /* 卡片样式 */
+    .feature-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        border: 1px solid #e1e5e9;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    /* 按钮样式 */
+    .primary-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .primary-button:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    /* 标签页样式 */
+    .tab-nav {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    /* 日志窗口样式 */
+    .log-container {
+        background: #1e1e1e;
+        color: #00ff00;
+        font-family: 'Courier New', monospace;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    /* 配置区域样式 */
+    .config-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 4px solid #667eea;
+    }
+
+    /* 状态指示器 */
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+
+    .status-success { background-color: #28a745; }
+    .status-warning { background-color: #ffc107; }
+    .status-error { background-color: #dc3545; }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+        .main-title { font-size: 2rem; }
+        .main-subtitle { font-size: 1rem; }
+        .feature-card { margin: 0.5rem 0; padding: 1rem; }
+    }
+    """
+
+    with gr.Blocks(
+        title="AI小说生成器 - 智能创作平台",
+        theme=gr.themes.Soft(),
+        css=custom_css
+    ) as demo:
+
+        # Landing页面头部
+        with gr.Row():
+            with gr.Column():
+                gr.HTML("""
+                <div class="main-header">
+                    <div class="main-title">🎯 AI小说生成器</div>
+                    <div class="main-subtitle">基于大语言模型的智能小说创作平台</div>
+                    <div style="margin-top: 1rem;">
+                        <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px; margin: 0 0.5rem;">
+                            ✨ 智能架构生成
+                        </span>
+                        <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px; margin: 0 0.5rem;">
+                            📚 章节蓝图规划
+                        </span>
+                        <span style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 20px; margin: 0 0.5rem;">
+                            🔍 智能上下文检索
+                        </span>
+                    </div>
+                </div>
+                """)
 
         # 主要状态变量
         log_state = gr.State("")
 
         with gr.Tabs() as tabs:
+            # Tab 0: 欢迎页面
+            with gr.Tab("🏠 欢迎", id="welcome"):
+                with gr.Row():
+                    with gr.Column(scale=2):
+                        gr.HTML("""
+                        <div class="feature-card">
+                            <h2>🚀 快速开始</h2>
+                            <p>欢迎使用AI小说生成器！按照以下步骤开始您的创作之旅：</p>
+                            <ol style="line-height: 1.8;">
+                                <li><strong>配置模型</strong> - 前往"模型配置"页面设置您的AI模型</li>
+                                <li><strong>设置参数</strong> - 在"小说参数"页面填写小说基本信息</li>
+                                <li><strong>开始创作</strong> - 在"主要功能"页面按步骤生成小说</li>
+                                <li><strong>管理文件</strong> - 使用"文件管理"页面查看和编辑内容</li>
+                            </ol>
+                        </div>
+                        """)
+
+                        with gr.Row():
+                            with gr.Column():
+                                gr.HTML("""
+                                <div class="feature-card">
+                                    <h3>✨ 核心功能</h3>
+                                    <ul style="line-height: 1.6;">
+                                        <li><strong>智能架构生成</strong> - AI自动构建小说世界观和情节框架</li>
+                                        <li><strong>章节蓝图规划</strong> - 详细的章节大纲和剧情安排</li>
+                                        <li><strong>草稿智能生成</strong> - 基于上下文的章节内容创作</li>
+                                        <li><strong>一致性检查</strong> - 自动检测剧情逻辑和角色一致性</li>
+                                    </ul>
+                                </div>
+                                """)
+
+                            with gr.Column():
+                                gr.HTML("""
+                                <div class="feature-card">
+                                    <h3>🎯 支持的模型</h3>
+                                    <ul style="line-height: 1.6;">
+                                        <li><strong>OpenAI</strong> - GPT-4, GPT-3.5系列</li>
+                                        <li><strong>Google Gemini</strong> - Gemini Pro, Flash系列</li>
+                                        <li><strong>DeepSeek</strong> - DeepSeek Chat系列</li>
+                                        <li><strong>火山引擎</strong> - 豆包系列模型</li>
+                                        <li><strong>其他</strong> - Azure OpenAI, Ollama等</li>
+                                    </ul>
+                                </div>
+                                """)
+
+                    with gr.Column(scale=1):
+                        gr.HTML("""
+                        <div class="feature-card">
+                            <h3>📊 系统状态</h3>
+                            <div style="margin: 1rem 0;">
+                                <div style="margin: 0.5rem 0;">
+                                    <span class="status-indicator status-warning"></span>
+                                    <span>配置状态: 待设置</span>
+                                </div>
+                                <div style="margin: 0.5rem 0;">
+                                    <span class="status-indicator status-warning"></span>
+                                    <span>模型连接: 未测试</span>
+                                </div>
+                                <div style="margin: 0.5rem 0;">
+                                    <span class="status-indicator status-success"></span>
+                                    <span>系统状态: 正常</span>
+                                </div>
+                            </div>
+                        </div>
+                        """)
+
+                        gr.HTML("""
+                        <div class="feature-card">
+                            <h3>💡 使用提示</h3>
+                            <ul style="line-height: 1.6; font-size: 0.9rem;">
+                                <li>首次使用请先配置API密钥</li>
+                                <li>建议先测试模型连接</li>
+                                <li>设置合适的保存路径</li>
+                                <li>可以随时编辑生成的内容</li>
+                                <li>支持多种文件格式导出</li>
+                            </ul>
+                        </div>
+                        """)
+
+                        # 快速配置按钮
+                        with gr.Row():
+                            quick_config_btn = gr.Button("🔧 快速配置", variant="primary", elem_classes=["primary-button"])
+                            quick_start_btn = gr.Button("🚀 开始创作", variant="primary", elem_classes=["primary-button"])
+
             # Tab 1: 主要功能
             with gr.Tab("📝 主要功能", id="main"):
                 with gr.Row():
                     with gr.Column(scale=2):
-                        # 左侧：章节内容和操作按钮
-                        gr.Markdown("### 📖 当前章节内容")
+                        # 章节内容区域
+                        gr.HTML("""
+                        <div class="config-section">
+                            <h3>📖 当前章节内容</h3>
+                            <p>在这里查看和编辑生成的章节内容</p>
+                        </div>
+                        """)
                         chapter_content = gr.Textbox(
                             label="章节内容（可编辑）",
                             lines=15,
                             max_lines=20,
-                            placeholder="生成的章节内容将显示在这里...",
+                            placeholder="生成的章节内容将显示在这里...\n\n💡 提示：\n1. 内容生成后可以直接编辑\n2. 编辑后的内容会在定稿时保存\n3. 支持Markdown格式",
                             interactive=True
                         )
 
                         # Step按钮区域
-                        gr.Markdown("### 🚀 生成流程")
+                        gr.HTML("""
+                        <div class="config-section">
+                            <h3>🚀 智能生成流程</h3>
+                            <p>按照以下步骤完成小说创作，每个步骤都会基于前一步的结果</p>
+                        </div>
+                        """)
                         with gr.Row():
-                            btn_step1 = gr.Button("Step1. 生成架构", variant="primary")
-                            btn_step2 = gr.Button("Step2. 生成目录", variant="primary")
-                            btn_step3 = gr.Button("Step3. 生成草稿", variant="primary")
-                            btn_step4 = gr.Button("Step4. 定稿章节", variant="primary")
+                            btn_step1 = gr.Button("Step1. 生成架构", variant="primary", elem_classes=["primary-button"])
+                            btn_step2 = gr.Button("Step2. 生成目录", variant="primary", elem_classes=["primary-button"])
+                            btn_step3 = gr.Button("Step3. 生成草稿", variant="primary", elem_classes=["primary-button"])
+                            btn_step4 = gr.Button("Step4. 定稿章节", variant="primary", elem_classes=["primary-button"])
+
+                        # 步骤说明
+                        gr.HTML("""
+                        <div style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem;">
+                            <strong>📋 流程说明：</strong><br>
+                            <strong>Step1</strong> - 根据主题生成完整的小说架构和世界观<br>
+                            <strong>Step2</strong> - 基于架构生成详细的章节蓝图<br>
+                            <strong>Step3</strong> - 生成指定章节的草稿内容<br>
+                            <strong>Step4</strong> - 定稿章节并更新全局状态
+                        </div>
+                        """)
 
                         # 辅助功能按钮
-                        gr.Markdown("### 🔧 辅助功能")
+                        gr.HTML("""
+                        <div class="config-section">
+                            <h3>🔧 辅助工具</h3>
+                            <p>提供额外的创作辅助功能</p>
+                        </div>
+                        """)
                         with gr.Row():
-                            btn_consistency = gr.Button("一致性检查")
-                            btn_import_knowledge = gr.Button("导入知识库")
-                            btn_clear_vectorstore = gr.Button("清空向量库", variant="stop")
-                            btn_plot_arcs = gr.Button("查看剧情要点")
+                            btn_consistency = gr.Button("🔍 一致性检查", elem_classes=["primary-button"])
+                            btn_import_knowledge = gr.Button("📚 导入知识库", elem_classes=["primary-button"])
+                            btn_clear_vectorstore = gr.Button("🗑️ 清空向量库", variant="stop")
+                            btn_plot_arcs = gr.Button("📊 查看剧情要点", elem_classes=["primary-button"])
 
                         # 日志区域
-                        gr.Markdown("### 📋 输出日志")
+                        gr.HTML("""
+                        <div class="config-section">
+                            <h3>📋 系统日志</h3>
+                            <p>实时显示生成过程和系统状态</p>
+                        </div>
+                        """)
                         log_output = gr.Textbox(
                             label="系统日志",
                             lines=8,
                             max_lines=10,
                             interactive=False,
-                            value=""
+                            value="",
+                            elem_classes=["log-container"]
                         )
 
                     with gr.Column(scale=1):
                         # 右侧：配置和参数
-                        gr.Markdown("### ⚙️ 快速配置")
+                        gr.HTML("""
+                        <div class="config-section">
+                            <h3>⚙️ 快速配置</h3>
+                            <p>设置当前创作的基本参数</p>
+                        </div>
+                        """)
 
                         # 文件路径设置
                         filepath_input = gr.Textbox(
-                            label="保存路径",
-                            placeholder="请输入小说文件保存路径",
-                            value=default_filepath
+                            label="📁 保存路径",
+                            placeholder="例如: /Users/username/novels/my_novel",
+                            value=default_filepath,
+                            info="小说文件的保存目录"
                         )
 
                         # 章节号设置
                         chapter_num_input = gr.Number(
-                            label="当前章节号",
+                            label="📖 当前章节号",
                             value=1,
                             minimum=1,
-                            step=1
+                            step=1,
+                            info="要生成或编辑的章节编号"
                         )
 
                         # 本章指导
                         user_guidance_input = gr.Textbox(
-                            label="本章指导",
-                            lines=3,
+                            label="💡 本章指导",
+                            lines=4,
                             value=default_user_guidance,
-                            placeholder="对本章剧情的期望或提示..."
+                            placeholder="例如：\n- 主角遇到神秘老人\n- 揭示重要线索\n- 营造紧张氛围\n- 为下章埋下伏笔",
+                            info="对本章剧情发展的具体要求和提示"
                         )
 
-                        # 配置加载/保存按钮
+                        # 配置管理
+                        gr.HTML("""
+                        <div class="config-section">
+                            <h3>💾 配置管理</h3>
+                            <p>保存和加载创作配置</p>
+                        </div>
+                        """)
                         with gr.Row():
-                            btn_load_config = gr.Button("加载配置")
-                            btn_save_config = gr.Button("保存配置")
+                            btn_load_config = gr.Button("📥 加载配置", elem_classes=["primary-button"])
+                            btn_save_config = gr.Button("💾 保存配置", elem_classes=["primary-button"])
+
+                        # 创作进度
+                        gr.HTML("""
+                        <div class="feature-card">
+                            <h4>📊 创作进度</h4>
+                            <div style="margin: 0.5rem 0;">
+                                <div style="background: #e9ecef; border-radius: 10px; height: 8px; overflow: hidden;">
+                                    <div style="background: linear-gradient(90deg, #667eea, #764ba2); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                                </div>
+                                <small style="color: #6c757d;">0% 完成 (0/10 章节)</small>
+                            </div>
+                        </div>
+                        """)
+
+                        # 快捷操作
+                        gr.HTML("""
+                        <div class="feature-card">
+                            <h4>⚡ 快捷操作</h4>
+                            <div style="font-size: 0.9rem; line-height: 1.6;">
+                                <div>🔧 <strong>Ctrl+S</strong> - 保存当前内容</div>
+                                <div>📝 <strong>Ctrl+E</strong> - 编辑模式</div>
+                                <div>🔄 <strong>Ctrl+R</strong> - 重新生成</div>
+                                <div>💾 <strong>Ctrl+Shift+S</strong> - 导出文件</div>
+                            </div>
+                        </div>
+                        """)
 
             # Tab 2: 详细配置
             with gr.Tab("🔧 模型配置", id="config"):
@@ -315,96 +604,169 @@ def create_interface():
                     with gr.Column(scale=2):
                         with gr.Row():
                             with gr.Column():
-                                gr.Markdown("### 🤖 LLM模型设置")
+                                gr.HTML("""
+                                <div class="config-section">
+                                    <h3>🤖 LLM模型设置</h3>
+                                    <p>配置用于文本生成的大语言模型</p>
+                                </div>
+                                """)
                                 llm_interface = gr.Dropdown(
                                     choices=llm_interfaces,
-                                    label="接口类型",
-                                    value=default_llm_interface
+                                    label="🔌 接口类型",
+                                    value=default_llm_interface,
+                                    info="选择AI服务提供商"
                                 )
                                 llm_api_key = gr.Textbox(
-                                    label="API Key",
+                                    label="🔑 API Key",
                                     type="password",
                                     value=default_llm_api_key,
-                                    placeholder="请输入API密钥"
+                                    placeholder="请输入API密钥",
+                                    info="从服务商获取的API密钥"
                                 )
                                 llm_base_url = gr.Textbox(
-                                    label="Base URL",
+                                    label="🌐 Base URL",
                                     value=default_llm_base_url,
-                                    placeholder="API基础URL"
+                                    placeholder="API基础URL",
+                                    info="API服务的基础地址"
                                 )
                                 llm_model = gr.Textbox(
-                                    label="模型名称",
+                                    label="🎯 模型名称",
                                     value=default_llm_model,
-                                    placeholder="模型名称"
+                                    placeholder="模型名称",
+                                    info="具体的模型标识符"
                                 )
 
+                                gr.HTML("""
+                                <div style="margin: 1rem 0;">
+                                    <h4>⚙️ 生成参数</h4>
+                                </div>
+                                """)
                                 with gr.Row():
                                     temperature = gr.Slider(
-                                        label="Temperature",
+                                        label="🌡️ Temperature",
                                         minimum=0.0,
                                         maximum=2.0,
                                         value=default_temperature,
-                                        step=0.1
+                                        step=0.1,
+                                        info="控制输出的随机性 (0.0-2.0)"
                                     )
                                     max_tokens = gr.Number(
-                                        label="Max Tokens",
+                                        label="📏 Max Tokens",
                                         value=default_max_tokens,
-                                        minimum=1
+                                        minimum=1,
+                                        info="单次生成的最大字符数"
                                     )
                                     timeout = gr.Number(
-                                        label="Timeout (秒)",
+                                        label="⏱️ Timeout (秒)",
                                         value=default_timeout,
-                                        minimum=1
+                                        minimum=1,
+                                        info="请求超时时间"
                                     )
 
-                                btn_test_llm = gr.Button("测试LLM配置", variant="secondary")
+                                btn_test_llm = gr.Button("🧪 测试LLM配置", variant="primary", elem_classes=["primary-button"])
 
                             with gr.Column():
-                                gr.Markdown("### 🔍 Embedding模型设置")
+                                gr.HTML("""
+                                <div class="config-section">
+                                    <h3>🔍 Embedding模型设置</h3>
+                                    <p>配置用于向量检索的嵌入模型</p>
+                                </div>
+                                """)
                                 embedding_interface = gr.Dropdown(
                                     choices=llm_interfaces,
-                                    label="接口类型",
-                                    value=default_embedding_interface
+                                    label="🔌 接口类型",
+                                    value=default_embedding_interface,
+                                    info="选择Embedding服务提供商"
                                 )
                                 embedding_api_key = gr.Textbox(
-                                    label="API Key",
+                                    label="🔑 API Key",
                                     type="password",
                                     value=default_embedding_api_key,
-                                    placeholder="请输入API密钥"
+                                    placeholder="请输入API密钥",
+                                    info="可与LLM使用相同密钥"
                                 )
                                 embedding_base_url = gr.Textbox(
-                                    label="Base URL",
+                                    label="🌐 Base URL",
                                     value=default_embedding_base_url,
-                                    placeholder="API基础URL"
+                                    placeholder="API基础URL",
+                                    info="Embedding API的基础地址"
                                 )
                                 embedding_model = gr.Textbox(
-                                    label="模型名称",
+                                    label="🎯 模型名称",
                                     value=default_embedding_model,
-                                    placeholder="Embedding模型名称"
-                                )
-                                retrieval_k = gr.Number(
-                                    label="检索数量 (K)",
-                                    value=default_retrieval_k,
-                                    minimum=1,
-                                    maximum=20
+                                    placeholder="Embedding模型名称",
+                                    info="向量化模型的标识符"
                                 )
 
-                                btn_test_embedding = gr.Button("测试Embedding配置", variant="secondary")
+                                gr.HTML("""
+                                <div style="margin: 1rem 0;">
+                                    <h4>🔧 检索参数</h4>
+                                </div>
+                                """)
+                                retrieval_k = gr.Number(
+                                    label="📊 检索数量 (K)",
+                                    value=default_retrieval_k,
+                                    minimum=1,
+                                    maximum=20,
+                                    info="每次检索返回的相关片段数量"
+                                )
+
+                                btn_test_embedding = gr.Button("🧪 测试Embedding配置", variant="primary", elem_classes=["primary-button"])
 
                     with gr.Column(scale=1):
                         # 配置测试日志区域
-                        gr.Markdown("### 📋 配置测试日志")
+                        gr.HTML("""
+                        <div class="config-section">
+                            <h3>📋 配置测试日志</h3>
+                            <p>实时显示模型配置测试的详细过程</p>
+                        </div>
+                        """)
                         config_log_output = gr.Textbox(
                             label="测试日志",
                             lines=20,
                             max_lines=25,
                             interactive=False,
                             value="",
-                            placeholder="点击测试按钮查看详细日志..."
+                            placeholder="💡 点击测试按钮查看详细日志...\n\n🔍 这里会显示：\n• 连接状态\n• 请求参数\n• 响应结果\n• 错误诊断\n• 性能指标",
+                            elem_classes=["log-container"]
                         )
 
                         # 清空日志按钮
-                        btn_clear_config_log = gr.Button("清空日志", variant="secondary")
+                        btn_clear_config_log = gr.Button("🗑️ 清空日志", variant="secondary")
+
+                        # 配置状态卡片
+                        gr.HTML("""
+                        <div class="feature-card">
+                            <h4>📊 配置状态</h4>
+                            <div style="margin: 0.5rem 0;">
+                                <div style="margin: 0.3rem 0;">
+                                    <span class="status-indicator status-warning"></span>
+                                    <span style="font-size: 0.9rem;">LLM: 待测试</span>
+                                </div>
+                                <div style="margin: 0.3rem 0;">
+                                    <span class="status-indicator status-warning"></span>
+                                    <span style="font-size: 0.9rem;">Embedding: 待测试</span>
+                                </div>
+                            </div>
+                        </div>
+                        """)
+
+                        # 推荐配置
+                        gr.HTML("""
+                        <div class="feature-card">
+                            <h4>💡 推荐配置</h4>
+                            <div style="font-size: 0.85rem; line-height: 1.5;">
+                                <strong>🚀 快速开始:</strong><br>
+                                • OpenAI: gpt-4o-mini<br>
+                                • Gemini: gemini-1.5-flash<br>
+                                • DeepSeek: deepseek-chat<br><br>
+                                <strong>⚙️ 参数建议:</strong><br>
+                                • Temperature: 0.7-0.9<br>
+                                • Max Tokens: 4096-8192<br>
+                                • Timeout: 60-300秒
+                            </div>
+                        </div>
+                        """)
 
             # Tab 3: 小说参数
             with gr.Tab("📚 小说参数", id="params"):
@@ -563,6 +925,17 @@ def create_interface():
         btn_clear_config_log.click(
             fn=handle_clear_config_log,
             outputs=config_log_output
+        )
+
+        # 快速配置和开始按钮事件
+        quick_config_btn.click(
+            fn=lambda: None,
+            js="() => { document.querySelector('[data-testid=\"tab-config\"]').click(); }"
+        )
+
+        quick_start_btn.click(
+            fn=lambda: None,
+            js="() => { document.querySelector('[data-testid=\"tab-main\"]').click(); }"
         )
 
         # 核心生成功能事件
