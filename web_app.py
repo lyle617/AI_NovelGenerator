@@ -1461,6 +1461,17 @@ def create_interface():
             outputs=log_output
         )
 
+        # 文件路径变化时自动检查文件状态
+        filepath_input.change(
+            fn=handle_filepath_change,
+            inputs=filepath_input,
+            outputs=[
+                log_output, architecture_content, blueprint_content,
+                chapter_content, character_content, summary_content,
+                btn_step2, btn_step3, btn_step4
+            ]
+        )
+
         btn_plot_arcs.click(
             fn=handle_show_plot_arcs,
             inputs=[filepath_input, log_output],
@@ -1469,7 +1480,16 @@ def create_interface():
 
         # 简化后的文件管理 - 通过AI生成步骤自动更新内容
 
-
+        # 页面加载时自动检查文件状态（如果有默认路径）
+        if default_filepath:
+            demo.load(
+                fn=lambda: handle_filepath_change(default_filepath),
+                outputs=[
+                    log_output, architecture_content, blueprint_content,
+                    chapter_content, character_content, summary_content,
+                    btn_step2, btn_step3, btn_step4
+                ]
+            )
 
         return demo
 
@@ -2288,6 +2308,94 @@ def handle_show_plot_arcs(filepath, current_log):
 
     except Exception as e:
         return current_log + app.log_message(f"❌ 查看剧情要点时出错: {str(e)}")
+
+# 文件状态检查和界面初始化函数
+def check_file_status_and_init_ui(filepath):
+    """检查文件状态并返回初始化的UI状态"""
+    import os
+    from utils import read_file
+
+    if not filepath or not os.path.exists(filepath):
+        return {
+            'architecture_content': "",
+            'blueprint_content': "",
+            'chapter_content': "",
+            'character_content': "",
+            'summary_content': "",
+            'btn_step2_state': gr.Button("📑 生成目录", variant="secondary", interactive=False),
+            'btn_step3_state': gr.Button("📝 生成章节", variant="secondary", interactive=False),
+            'btn_step4_state': gr.Button("✅ 内容定稿", variant="secondary", interactive=False),
+            'log_message': "📁 请设置保存路径后，系统将自动检查已有文件并恢复进度。"
+        }
+
+    result = {
+        'architecture_content': "",
+        'blueprint_content': "",
+        'chapter_content': "",
+        'character_content': "",
+        'summary_content': "",
+        'btn_step2_state': gr.Button("📑 生成目录", variant="secondary", interactive=False),
+        'btn_step3_state': gr.Button("📝 生成章节", variant="secondary", interactive=False),
+        'btn_step4_state': gr.Button("✅ 内容定稿", variant="secondary", interactive=False),
+        'log_message': ""
+    }
+
+    messages = []
+
+    # 检查架构文件
+    arch_file = os.path.join(filepath, "Novel_architecture.txt")
+    if os.path.exists(arch_file):
+        result['architecture_content'] = read_file(arch_file)
+        result['btn_step2_state'] = gr.Button("📑 生成目录", variant="primary", interactive=True)
+        messages.append("✅ 已加载小说架构")
+
+    # 检查目录文件
+    blueprint_file = os.path.join(filepath, "Novel_directory.txt")
+    if os.path.exists(blueprint_file):
+        result['blueprint_content'] = read_file(blueprint_file)
+        result['btn_step3_state'] = gr.Button("📝 生成章节", variant="primary", interactive=True)
+        messages.append("✅ 已加载章节目录")
+
+    # 检查角色状态文件
+    character_file = os.path.join(filepath, "character_state.txt")
+    if os.path.exists(character_file):
+        result['character_content'] = read_file(character_file)
+        messages.append("✅ 已加载角色状态")
+
+    # 检查全局摘要文件
+    summary_file = os.path.join(filepath, "global_summary.txt")
+    if os.path.exists(summary_file):
+        result['summary_content'] = read_file(summary_file)
+        messages.append("✅ 已加载全局摘要")
+
+    # 检查是否有章节文件（检查chapter_1.txt作为示例）
+    chapter_file = os.path.join(filepath, "chapter_1.txt")
+    if os.path.exists(chapter_file):
+        result['chapter_content'] = read_file(chapter_file)
+        result['btn_step4_state'] = gr.Button("✅ 内容定稿", variant="primary", interactive=True)
+        messages.append("✅ 已加载第1章内容")
+
+    if messages:
+        result['log_message'] = "🔄 恢复创作进度：\n" + "\n".join(messages)
+    else:
+        result['log_message'] = "📝 未发现已有文件，可以开始新的创作。"
+
+    return result
+
+def handle_filepath_change(filepath):
+    """处理文件路径变化事件"""
+    status = check_file_status_and_init_ui(filepath)
+    return (
+        app.log_message(status['log_message']),  # log_output
+        status['architecture_content'],          # architecture_content
+        status['blueprint_content'],             # blueprint_content
+        status['chapter_content'],               # chapter_content
+        status['character_content'],             # character_content
+        status['summary_content'],               # summary_content
+        status['btn_step2_state'],               # btn_step2
+        status['btn_step3_state'],               # btn_step3
+        status['btn_step4_state']                # btn_step4
+    )
 
 # 删除重复的事件处理器函数，已经在create_interface中直接设置
 
