@@ -1399,7 +1399,7 @@ def create_interface():
                 word_number_input, filepath_input, user_guidance_input,
                 log_output
             ],
-            outputs=log_output
+            outputs=[log_output, architecture_content, btn_step2]
         )
 
         btn_step2.click(
@@ -1409,7 +1409,7 @@ def create_interface():
                 llm_model, temperature, max_tokens, timeout,
                 filepath_input, log_output
             ],
-            outputs=log_output
+            outputs=[log_output, blueprint_content, btn_step3]
         )
 
         btn_step3.click(
@@ -1952,11 +1952,22 @@ def handle_save_file(filepath, filename, content):
 def handle_generate_architecture(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
                                 topic, genre, num_chapters, word_number, filepath, user_guidance, current_log):
     """处理生成小说架构事件"""
+    import os
+    from utils import read_file
+
     if not filepath:
-        return current_log + app.log_message("❌ 请先设置保存文件路径")
+        return (
+            current_log + app.log_message("❌ 请先设置保存文件路径"),
+            "",  # architecture_content
+            gr.Button("📑 生成目录", variant="secondary", interactive=False)  # btn_step2
+        )
 
     if not topic.strip():
-        return current_log + app.log_message("❌ 请先输入小说主题")
+        return (
+            current_log + app.log_message("❌ 请先输入小说主题"),
+            "",  # architecture_content
+            gr.Button("📑 生成目录", variant="secondary", interactive=False)  # btn_step2
+        )
 
     try:
         log_msg = current_log + app.log_message("🚀 开始生成小说架构...")
@@ -1985,16 +1996,39 @@ def handle_generate_architecture(llm_interface, llm_api_key, llm_base_url, llm_m
 
         # 这里简化处理，实际应该使用异步或进度条
         result = generate_task()
-        return log_msg + app.log_message(result)
+        final_log = log_msg + app.log_message(result)
+
+        # 读取生成的架构内容
+        architecture_file = os.path.join(filepath, "Novel_architecture.txt")
+        if os.path.exists(architecture_file) and "✅" in result:
+            architecture_content = read_file(architecture_file)
+            # 启用下一步按钮
+            next_button = gr.Button("📑 生成目录", variant="primary", interactive=True)
+        else:
+            architecture_content = ""
+            next_button = gr.Button("📑 生成目录", variant="secondary", interactive=False)
+
+        return final_log, architecture_content, next_button
 
     except Exception as e:
-        return current_log + app.log_message(f"❌ 生成小说架构时出错: {str(e)}")
+        return (
+            current_log + app.log_message(f"❌ 生成小说架构时出错: {str(e)}"),
+            "",  # architecture_content
+            gr.Button("📑 生成目录", variant="secondary", interactive=False)  # btn_step2
+        )
 
 def handle_generate_blueprint(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
                              filepath, current_log):
     """处理生成章节蓝图事件"""
+    import os
+    from utils import read_file
+
     if not filepath:
-        return current_log + app.log_message("❌ 请先设置保存文件路径")
+        return (
+            current_log + app.log_message("❌ 请先设置保存文件路径"),
+            "",  # blueprint_content
+            gr.Button("📝 生成章节", variant="secondary", interactive=False)  # btn_step3
+        )
 
     try:
         log_msg = current_log + app.log_message("🚀 开始生成章节蓝图...")
@@ -2016,10 +2050,26 @@ def handle_generate_blueprint(llm_interface, llm_api_key, llm_base_url, llm_mode
                 return f"❌ 生成章节蓝图时出错: {str(e)}"
 
         result = generate_task()
-        return log_msg + app.log_message(result)
+        final_log = log_msg + app.log_message(result)
+
+        # 读取生成的蓝图内容
+        blueprint_file = os.path.join(filepath, "Novel_directory.txt")
+        if os.path.exists(blueprint_file) and "✅" in result:
+            blueprint_content = read_file(blueprint_file)
+            # 启用下一步按钮
+            next_button = gr.Button("📝 生成章节", variant="primary", interactive=True)
+        else:
+            blueprint_content = ""
+            next_button = gr.Button("📝 生成章节", variant="secondary", interactive=False)
+
+        return final_log, blueprint_content, next_button
 
     except Exception as e:
-        return current_log + app.log_message(f"❌ 生成章节蓝图时出错: {str(e)}")
+        return (
+            current_log + app.log_message(f"❌ 生成章节蓝图时出错: {str(e)}"),
+            "",  # blueprint_content
+            gr.Button("📝 生成章节", variant="secondary", interactive=False)  # btn_step3
+        )
 
 def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
                                  embedding_interface, embedding_api_key, embedding_base_url, embedding_model, retrieval_k,
