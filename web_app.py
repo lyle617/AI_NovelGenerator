@@ -552,69 +552,92 @@ def create_interface():
                     #     </div>
                     #     """)
 
-                    # AI创作配置面板 - 智能参数概览
-                    with gr.Row():
-                        with gr.Column(scale=2):
-                            # 当前小说参数概览
-                            gr.HTML("""
-                            <div style="margin-bottom: 1rem;">
-                                <h3 style="margin: 0 0 0.5rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
-                                    📋 当前小说参数概览
-                                    <span style="background: #e3f2fd; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; color: #1976d2;">
-                                        智能同步
-                                    </span>
-                                </h3>
-                                <p style="margin: 0; color: #666; font-size: 0.9rem;">显示当前小说配置，如需修改请前往"小说参数"页面</p>
-                            </div>
-                            """)
+                    # 小说基础参数设置区
+                    gr.HTML("""
+                    <div style="margin: 1.5rem 0 1rem 0;">
+                        <h3 style="margin: 0 0 0.5rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                            📖 小说基础参数设置
+                            <span style="background: #e3f2fd; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; color: #1976d2;">
+                                可直接编辑
+                            </span>
+                        </h3>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">设置小说的基本信息，这些参数将影响AI生成的内容风格和结构</p>
+                    </div>
+                    """)
 
-                            # 参数概览卡片 - 使用默认值初始化
-                            novel_params_overview = gr.HTML(
-                                value=app.update_params_overview(
-                                    default_topic, default_genre,
-                                    default_num_chapters, default_word_number
-                                )
+                    # 基本设置 - 可折叠
+                    with gr.Accordion("📖 基本设置", open=True):
+                        topic_input = gr.Textbox(
+                            label="📝 主题描述",
+                            lines=3,
+                            placeholder="请详细描述小说的主题、背景和核心故事...",
+                            value=default_topic,
+                            info="详细的主题描述有助于AI生成更符合预期的内容"
+                        )
+
+                        with gr.Row():
+                            genre_input = gr.Dropdown(
+                                choices=genres,
+                                label="📚 小说类型",
+                                value=default_genre,
+                                info="选择小说的主要类型"
+                            )
+                            num_chapters_input = gr.Number(
+                                label="📊 章节数量",
+                                value=default_num_chapters,
+                                minimum=1,
+                                maximum=100,
+                                info="计划创作的总章节数"
+                            )
+                            word_number_input = gr.Number(
+                                label="📄 每章字数",
+                                value=default_word_number,
+                                minimum=100,
+                                maximum=10000,
+                                info="每章的目标字数"
                             )
 
-                            # 添加一个可见的跳转按钮
-                            jump_to_params_btn = gr.Button(
-                                "🔧 修改小说参数",
-                                variant="secondary",
-                                size="sm"
+                    # 可选元素 - 可折叠
+                    with gr.Accordion("🎭 可选创作元素", open=False):
+                        characters_involved_input = gr.Textbox(
+                            label="👥 核心人物",
+                            lines=2,
+                            value=default_characters_involved,
+                            placeholder="描述主要角色的性格、背景和关系...",
+                            info="详细的人物设定有助于保持角色一致性"
+                        )
+
+                        with gr.Row():
+                            key_items_input = gr.Textbox(
+                                label="🔑 关键道具",
+                                value=default_key_items,
+                                placeholder="重要的物品、武器或道具...",
+                                info="影响剧情的重要物品"
+                            )
+                            scene_location_input = gr.Textbox(
+                                label="🌍 空间坐标",
+                                value=default_scene_location,
+                                placeholder="主要场景和地点...",
+                                info="故事发生的主要场所"
+                            )
+                            time_constraint_input = gr.Textbox(
+                                label="⏰ 时间压力",
+                                value=default_time_constraint,
+                                placeholder="时间相关的约束或紧迫感...",
+                                info="推动剧情发展的时间因素"
                             )
 
+                        # 参数操作按钮
+                        with gr.Row():
+                            btn_load_config = gr.Button("📥 加载配置", elem_classes=["primary-button"], scale=1)
+                            btn_save_config = gr.Button("💾 保存配置", elem_classes=["primary-button"], scale=1)
+                            btn_reset_params = gr.Button("🔄 重置参数", variant="secondary", scale=1)
 
 
 
 
-                        with gr.Column(scale=1):
-                            # AI状态监控
-                            ai_status_monitor = gr.HTML("""
-                            <div style="background: #f8f9fa; border-radius: 12px; padding: 1rem; border-left: 4px solid #28a745;">
-                                <h4 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
-                                    🤖 AI状态监控
-                                </h4>
-                                <div style="space-y: 0.5rem;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                        <span style="font-size: 0.9rem; color: #666;">LLM模型:</span>
-                                        <span style="font-size: 0.9rem; color: #dc3545;">未配置</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                        <span style="font-size: 0.9rem; color: #666;">Embedding:</span>
-                                        <span style="font-size: 0.9rem; color: #dc3545;">未配置</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                        <span style="font-size: 0.9rem; color: #666;">创作进度:</span>
-                                        <span style="font-size: 0.9rem; color: #6c757d;">0/4 步骤</span>
-                                    </div>
-                                    <div style="margin-top: 1rem; padding: 0.75rem; background: #fff3cd; border-radius: 8px; border-left: 3px solid #ffc107;">
-                                        <div style="font-size: 0.85rem; color: #856404;">
-                                            💡 请先配置AI模型，然后开始自动创作
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            """)
+
+
 
 
 
@@ -1382,64 +1405,7 @@ def create_interface():
                         </div>
                         """)
 
-                # Tab 3: 小说参数
-                with gr.Tab("📚 小说参数", id="params"):
-                    with gr.Column():
-                        gr.Markdown("### 📖 基本设置")
 
-                        topic_input = gr.Textbox(
-                            label="主题 (Topic)",
-                            lines=3,
-                            placeholder="请描述小说的主题和背景...",
-                            value=default_topic
-                        )
-
-                    with gr.Row():
-                        genre_input = gr.Dropdown(
-                            choices=genres,
-                            label="类型",
-                            value=default_genre
-                        )
-                        num_chapters_input = gr.Number(
-                            label="章节数",
-                            value=default_num_chapters,
-                            minimum=1
-                        )
-                        word_number_input = gr.Number(
-                            label="每章字数",
-                            value=default_word_number,
-                            minimum=100
-                        )
-
-                    gr.Markdown("### 🎭 可选元素")
-
-                    characters_involved_input = gr.Textbox(
-                        label="核心人物",
-                        lines=2,
-                        value=default_characters_involved,
-                        placeholder="描述主要角色..."
-                    )
-
-                    with gr.Row():
-                        key_items_input = gr.Textbox(
-                            label="关键道具",
-                            value=default_key_items,
-                            placeholder="重要物品或道具..."
-                        )
-                        scene_location_input = gr.Textbox(
-                            label="空间坐标",
-                            value=default_scene_location,
-                            placeholder="主要场景位置..."
-                        )
-                        time_constraint_input = gr.Textbox(
-                            label="时间压力",
-                            value=default_time_constraint,
-                            placeholder="时间相关的约束..."
-                        )
-
-                    with gr.Row():
-                        btn_load_config = gr.Button("📥 加载配置", elem_classes=["primary-button"], scale=1)
-                        btn_save_config = gr.Button("💾 保存配置", elem_classes=["primary-button"], scale=1)
 
 
 
@@ -1482,7 +1448,7 @@ def create_interface():
                 llm_interface, llm_api_key, llm_base_url,
                 llm_model, temperature, max_tokens, timeout, config_log_output
             ],
-            outputs=[config_log_output, llm_status, config_status_display, ai_status_monitor]
+            outputs=[config_log_output, llm_status, config_status_display]
         )
 
         btn_test_embedding.click(
@@ -1492,13 +1458,13 @@ def create_interface():
                 embedding_base_url, embedding_model, config_log_output,
                 use_same_key, llm_api_key, llm_base_url
             ],
-            outputs=[config_log_output, embedding_status, config_status_display, ai_status_monitor]
+            outputs=[config_log_output, embedding_status, config_status_display]
         )
 
         # 清空配置日志事件
         btn_clear_config_log.click(
             fn=handle_clear_config_log,
-            outputs=[config_log_output, llm_status, embedding_status, config_status_display, ai_status_monitor]
+            outputs=[config_log_output, llm_status, embedding_status, config_status_display]
         )
 
         # Embedding API密钥同步选项事件
@@ -1523,17 +1489,9 @@ def create_interface():
             js="() => { document.querySelector('[data-testid=\"tab-main\"]').click(); }"
         )
 
-        # 参数同步事件 - 当小说参数页面的参数改变时，同步更新AI创作页面的概览
-        def sync_params_overview(topic, genre, num_chapters, word_number):
-            return app.update_params_overview(topic, genre, num_chapters, word_number)
 
-        # 监听小说参数的变化
-        for param_input in [topic_input, genre_input, num_chapters_input, word_number_input]:
-            param_input.change(
-                fn=sync_params_overview,
-                inputs=[topic_input, genre_input, num_chapters_input, word_number_input],
-                outputs=[novel_params_overview]
-            )
+
+
 
 
 
@@ -1971,10 +1929,9 @@ def handle_test_llm_config(interface_format, api_key, base_url, model_name, temp
     # 生成更新的配置状态HTML
     config_status_html = generate_config_status_html()
 
-    # 生成AI状态监控HTML
-    ai_monitor_html = generate_ai_status_monitor_html()
 
-    return log_msg, status_html, config_status_html, ai_monitor_html
+
+    return log_msg, status_html, config_status_html
 
 def handle_test_embedding_config(interface_format, api_key, base_url, model_name, current_log, use_same_key, llm_api_key, llm_base_url):
     """处理测试Embedding配置事件"""
@@ -2085,10 +2042,7 @@ def handle_test_embedding_config(interface_format, api_key, base_url, model_name
     # 生成更新的配置状态HTML
     config_status_html = generate_config_status_html()
 
-    # 生成AI状态监控HTML
-    ai_monitor_html = generate_ai_status_monitor_html()
-
-    return log_msg, status_html, config_status_html, ai_monitor_html
+    return log_msg, status_html, config_status_html
 
 def handle_clear_config_log():
     """清空配置日志"""
@@ -2118,10 +2072,7 @@ def handle_clear_config_log():
     # 生成重置的配置状态HTML
     config_status_html = generate_config_status_html()
 
-    # 生成重置的AI状态监控HTML
-    ai_monitor_html = generate_ai_status_monitor_html()
-
-    return f"[{timestamp}] 📋 配置测试日志已清空\n", reset_status_html, reset_status_html, config_status_html, ai_monitor_html
+    return f"[{timestamp}] 📋 配置测试日志已清空\n", reset_status_html, reset_status_html, config_status_html
 
 def handle_load_file(filepath, filename):
     """处理文件加载事件"""
