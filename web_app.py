@@ -690,11 +690,12 @@ def create_interface():
                             # AI运行日志
                             log_output = gr.Textbox(
                                 label="📋 AI运行日志",
-                                lines=12,
-                                max_lines=20,
+                                lines=15,
+                                max_lines=30,
                                 interactive=False,
                                 value="🤖 AI小说生成器已启动\n💡 请先配置AI模型，然后按步骤创作\n",
-                                elem_classes=["log-container"]
+                                elem_classes=["log-container"],
+                                autoscroll=True
                             )
 
                         # 右侧：内容预览编辑区域
@@ -705,50 +706,60 @@ def create_interface():
                                 with gr.Tab("📋 架构"):
                                     architecture_content = gr.Textbox(
                                         label="",
-                                        lines=18,
+                                        lines=20,
+                                        max_lines=50,
                                         placeholder="📋 小说架构将在这里显示...\n\n点击左侧\"生成架构\"按钮开始AI生成。",
                                         interactive=True,
-                                        show_label=False
+                                        show_label=False,
+                                        autoscroll=False
                                     )
 
                                 # 章节蓝图
                                 with gr.Tab("📑 目录"):
                                     blueprint_content = gr.Textbox(
                                         label="",
-                                        lines=18,
+                                        lines=20,
+                                        max_lines=100,
                                         placeholder="📑 章节目录将在这里显示...\n\n完成架构后，点击\"生成目录\"按钮。",
                                         interactive=True,
-                                        show_label=False
+                                        show_label=False,
+                                        autoscroll=False
                                     )
 
                                 # 当前章节内容
                                 with gr.Tab("📝 章节"):
                                     chapter_content = gr.Textbox(
                                         label="",
-                                        lines=18,
+                                        lines=20,
+                                        max_lines=200,
                                         placeholder="📝 章节内容将在这里显示...\n\n完成前两步后，点击\"生成章节\"按钮。",
                                         interactive=True,
-                                        show_label=False
+                                        show_label=False,
+                                        autoscroll=False
                                     )
 
                                 # 角色状态
                                 with gr.Tab("👥 角色"):
                                     character_content = gr.Textbox(
                                         label="",
-                                        lines=18,
+                                        lines=20,
+                                        max_lines=80,
                                         placeholder="👥 角色状态信息将在这里显示...",
                                         interactive=True,
-                                        show_label=False
+                                        show_label=False,
+                                        autoscroll=False
                                     )
 
                                 # 全局摘要
                                 with gr.Tab("📊 摘要"):
                                     summary_content = gr.Textbox(
                                         label="",
-                                        lines=18,
+                                        lines=20,
+                                        max_lines=60,
                                         placeholder="📊 全局摘要将在这里显示...",
                                         interactive=True,
-                                        show_label=False
+                                        show_label=False,
+                                        autoscroll=False
                                     )
 
                         # with gr.Column(scale=1):
