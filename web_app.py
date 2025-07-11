@@ -1478,7 +1478,7 @@ def create_interface():
                 llm_model, temperature, max_tokens, timeout,
                 embedding_interface, embedding_api_key, embedding_base_url,
                 embedding_model, retrieval_k,
-                filepath_input, current_chapter, user_guidance_input,
+                filepath_input, current_chapter, word_number_input, user_guidance_input,
                 log_output
             ],
             outputs=[chapter_content, log_output, btn_step4]
@@ -1491,7 +1491,7 @@ def create_interface():
                 llm_model, temperature, max_tokens, timeout,
                 embedding_interface, embedding_api_key, embedding_base_url,
                 embedding_model,
-                filepath_input, current_chapter, chapter_content,
+                filepath_input, current_chapter, word_number_input, chapter_content,
                 log_output
             ],
             outputs=[log_output, character_content, summary_content]
@@ -2154,7 +2154,7 @@ def handle_generate_blueprint(llm_interface, llm_api_key, llm_base_url, llm_mode
 
 def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
                                  embedding_interface, embedding_api_key, embedding_base_url, embedding_model, retrieval_k,
-                                 filepath, chapter_num, user_guidance, current_log):
+                                 filepath, chapter_num, word_number, user_guidance, current_log):
     """处理生成章节草稿事件"""
     import os
     from utils import read_file
@@ -2175,15 +2175,20 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
                     interface_format=llm_interface,
                     api_key=llm_api_key,
                     base_url=llm_base_url,
-                    llm_model=llm_model,
+                    model_name=llm_model,
                     embedding_interface_format=embedding_interface,
                     embedding_api_key=embedding_api_key,
-                    embedding_base_url=embedding_base_url,
+                    embedding_url=embedding_base_url,
                     embedding_model_name=embedding_model,
-                    retrieval_k=int(retrieval_k),
+                    embedding_retrieval_k=int(retrieval_k),
                     filepath=filepath,
-                    chapter_num=int(chapter_num),
+                    novel_number=int(chapter_num),
+                    word_number=int(word_number),
                     user_guidance=user_guidance,
+                    characters_involved="",  # 从章节蓝图中自动获取
+                    key_items="",  # 从章节蓝图中自动获取
+                    scene_location="",  # 从章节蓝图中自动获取
+                    time_constraint="",  # 从章节蓝图中自动获取
                     temperature=temperature,
                     max_tokens=int(max_tokens),
                     timeout=int(timeout)
@@ -2217,7 +2222,7 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
 
 def handle_finalize_chapter(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
                            embedding_interface, embedding_api_key, embedding_base_url, embedding_model,
-                           filepath, chapter_num, chapter_content, current_log):
+                           filepath, chapter_num, word_number, chapter_content, current_log):
     """处理定稿章节事件"""
     import os
     from utils import read_file, save_string_to_txt
@@ -2249,13 +2254,14 @@ def handle_finalize_chapter(llm_interface, llm_api_key, llm_base_url, llm_model,
                     interface_format=llm_interface,
                     api_key=llm_api_key,
                     base_url=llm_base_url,
-                    llm_model=llm_model,
+                    model_name=llm_model,
                     embedding_interface_format=embedding_interface,
                     embedding_api_key=embedding_api_key,
-                    embedding_base_url=embedding_base_url,
+                    embedding_url=embedding_base_url,
                     embedding_model_name=embedding_model,
                     filepath=filepath,
-                    chapter_num=int(chapter_num),
+                    novel_number=int(chapter_num),
+                    word_number=int(word_number),
                     temperature=temperature,
                     max_tokens=int(max_tokens),
                     timeout=int(timeout)
