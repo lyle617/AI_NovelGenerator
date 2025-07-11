@@ -388,6 +388,44 @@ def create_interface():
         padding: 1rem;
     }
 
+    /* 可滚动文本框样式 - 强制显示滚动条 */
+    .scrollable-textbox textarea {
+        overflow-y: scroll !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: #888 #f1f1f1 !important;
+    }
+
+    /* Webkit浏览器滚动条样式 */
+    .scrollable-textbox textarea::-webkit-scrollbar {
+        width: 8px !important;
+    }
+
+    .scrollable-textbox textarea::-webkit-scrollbar-track {
+        background: #f1f1f1 !important;
+        border-radius: 4px !important;
+    }
+
+    .scrollable-textbox textarea::-webkit-scrollbar-thumb {
+        background: #888 !important;
+        border-radius: 4px !important;
+    }
+
+    .scrollable-textbox textarea::-webkit-scrollbar-thumb:hover {
+        background: #555 !important;
+    }
+
+    /* 确保文本框有固定高度以触发滚动条 */
+    .scrollable-textbox {
+        height: 400px !important;
+        min-height: 400px !important;
+    }
+
+    .scrollable-textbox textarea {
+        height: 100% !important;
+        min-height: 400px !important;
+        resize: vertical !important;
+    }
+
     /* 配置区域样式 */
     .config-section {
         background: #f8f9fa;
@@ -706,60 +744,70 @@ def create_interface():
                                 with gr.Tab("📋 架构"):
                                     architecture_content = gr.Textbox(
                                         label="",
-                                        lines=20,
+                                        lines=15,
                                         max_lines=50,
                                         placeholder="📋 小说架构将在这里显示...\n\n点击左侧\"生成架构\"按钮开始AI生成。",
                                         interactive=True,
                                         show_label=False,
-                                        autoscroll=False
+                                        autoscroll=False,
+                                        container=True,
+                                        elem_classes=["scrollable-textbox"]
                                     )
 
                                 # 章节蓝图
                                 with gr.Tab("📑 目录"):
                                     blueprint_content = gr.Textbox(
                                         label="",
-                                        lines=20,
+                                        lines=15,
                                         max_lines=100,
                                         placeholder="📑 章节目录将在这里显示...\n\n完成架构后，点击\"生成目录\"按钮。",
                                         interactive=True,
                                         show_label=False,
-                                        autoscroll=False
+                                        autoscroll=False,
+                                        container=True,
+                                        elem_classes=["scrollable-textbox"]
                                     )
 
                                 # 当前章节内容
                                 with gr.Tab("📝 章节"):
                                     chapter_content = gr.Textbox(
                                         label="",
-                                        lines=20,
+                                        lines=15,
                                         max_lines=200,
                                         placeholder="📝 章节内容将在这里显示...\n\n完成前两步后，点击\"生成章节\"按钮。",
                                         interactive=True,
                                         show_label=False,
-                                        autoscroll=False
+                                        autoscroll=False,
+                                        container=True,
+                                        elem_classes=["scrollable-textbox"]
                                     )
 
                                 # 角色状态
                                 with gr.Tab("👥 角色"):
                                     character_content = gr.Textbox(
                                         label="",
-                                        lines=20,
+                                        lines=15,
                                         max_lines=80,
                                         placeholder="👥 角色状态信息将在这里显示...",
                                         interactive=True,
                                         show_label=False,
-                                        autoscroll=False
+                                        autoscroll=False,
+                                        container=True,
+                                        elem_classes=["scrollable-textbox"]
                                     )
 
                                 # 全局摘要
                                 with gr.Tab("📊 摘要"):
                                     summary_content = gr.Textbox(
                                         label="",
-                                        lines=20,
+                                        lines=15,
                                         max_lines=60,
                                         placeholder="📊 全局摘要将在这里显示...",
                                         interactive=True,
                                         show_label=False,
-                                        autoscroll=False
+                                        autoscroll=False,
+                                        container=True,
+                                        elem_classes=["scrollable-textbox"]
                                     )
 
                         # with gr.Column(scale=1):
