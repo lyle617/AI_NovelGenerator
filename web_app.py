@@ -640,35 +640,35 @@ def create_interface():
                     # 创作设置 - 简化版
                     with gr.Accordion("🎯 创作设置", open=True):
                         with gr.Row():
-                        with gr.Column(scale=1):
-                            current_chapter = gr.Number(
-                                label="📖 当前创作章节",
-                                value=1,
-                                minimum=1,
-                                step=1,
-                                info="选择要生成或编辑的章节"
-                            )
+                            with gr.Column(scale=1):
+                                current_chapter = gr.Number(
+                                    label="📖 当前创作章节",
+                                    value=1,
+                                    minimum=1,
+                                    step=1,
+                                    info="选择要生成或编辑的章节"
+                                )
 
-                        with gr.Column(scale=2):
-                            user_guidance_input = gr.Textbox(
-                                label="📝 本章创作指导",
-                                lines=3,
-                                max_lines=5,
-                                value=default_user_guidance,
-                                placeholder="例如：主角遇到神秘老人，揭示重要线索...\n\n可以包括：\n• 本章的主要情节发展\n• 角色的行为和对话要求\n• 场景描述的重点\n• 情感基调和氛围",
-                                info="对本章剧情发展的具体要求（可选）",
-                                interactive=True,
-                                show_label=True,
-                                container=True
-                            )
+                            with gr.Column(scale=2):
+                                user_guidance_input = gr.Textbox(
+                                    label="📝 本章创作指导",
+                                    lines=3,
+                                    max_lines=5,
+                                    value=default_user_guidance,
+                                    placeholder="例如：主角遇到神秘老人，揭示重要线索...\n\n可以包括：\n• 本章的主要情节发展\n• 角色的行为和对话要求\n• 场景描述的重点\n• 情感基调和氛围",
+                                    info="对本章剧情发展的具体要求（可选）",
+                                    interactive=True,
+                                    show_label=True,
+                                    container=True
+                                )
 
-                        with gr.Column(scale=2):
-                            filepath_input = gr.Textbox(
-                                label="📁 保存路径",
-                                placeholder="例如: /Users/username/novels/my_novel",
-                                value=default_filepath,
-                                info="小说文件的保存目录"
-                            )
+                            with gr.Column(scale=2):
+                                filepath_input = gr.Textbox(
+                                    label="📁 保存路径",
+                                    placeholder="例如: /Users/username/novels/my_novel",
+                                    value=default_filepath,
+                                    info="小说文件的保存目录"
+                                )
                     # AI生成步骤
                     with gr.Row():
                         btn_step1 = gr.Button("📋 生成架构", variant="primary", scale=1)
