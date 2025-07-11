@@ -589,6 +589,12 @@ def create_interface():
                                 info="每章的目标字数"
                             )
 
+                        # 配置操作按钮 - 移到基本设置区域
+                        with gr.Row():
+                            btn_load_config = gr.Button("📥 加载配置", elem_classes=["primary-button"], scale=1)
+                            btn_save_config = gr.Button("💾 保存配置", elem_classes=["primary-button"], scale=1)
+                            btn_reset_params = gr.Button("🔄 重置参数", variant="secondary", scale=1)
+
                     # 高级设置 - 默认折叠
                     with gr.Accordion("🎭 高级设置 (可选)", open=False):
                         characters_involved_input = gr.Textbox(
@@ -623,11 +629,7 @@ def create_interface():
                                 info="推动剧情发展的时间因素"
                             )
 
-                        # 参数操作按钮
-                        with gr.Row():
-                            btn_load_config = gr.Button("📥 加载配置", elem_classes=["primary-button"], scale=1)
-                            btn_save_config = gr.Button("💾 保存配置", elem_classes=["primary-button"], scale=1)
-                            btn_reset_params = gr.Button("🔄 重置参数", variant="secondary", scale=1)
+
 
 
 
