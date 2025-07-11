@@ -741,49 +741,49 @@ def create_interface():
                                 show_label=False
                             )
 
-                        with gr.Column(scale=1):
-                            # AI生成进度和控制
-                            ai_generation_status = gr.HTML("""
-                            <div style="background: #fff; border-radius: 12px; padding: 1rem; border: 2px solid #e0e0e0;">
-                                <h4 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
-                                    ⚡ 生成进度
-                                </h4>
-                                <div style="margin-bottom: 1rem;">
-                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                        <span style="font-size: 0.9rem; color: #666;">当前状态:</span>
-                                        <span style="font-size: 0.9rem; color: #666;">等待开始</span>
-                                    </div>
-                                    <div style="background: #f5f5f5; border-radius: 10px; height: 8px; overflow: hidden;">
-                                        <div style="background: #4caf50; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-                                    </div>
-                                </div>
+                        # with gr.Column(scale=1):
+                        #     # AI生成进度和控制
+                        #     ai_generation_status = gr.HTML("""
+                        #     <div style="background: #fff; border-radius: 12px; padding: 1rem; border: 2px solid #e0e0e0;">
+                        #         <h4 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                        #             ⚡ 生成进度
+                        #         </h4>
+                        #         <div style="margin-bottom: 1rem;">
+                        #             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        #                 <span style="font-size: 0.9rem; color: #666;">当前状态:</span>
+                        #                 <span style="font-size: 0.9rem; color: #666;">等待开始</span>
+                        #             </div>
+                        #             <div style="background: #f5f5f5; border-radius: 10px; height: 8px; overflow: hidden;">
+                        #                 <div style="background: #4caf50; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                        #             </div>
+                        #         </div>
 
-                                <div style="space-y: 0.5rem;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                        <span style="width: 16px; height: 16px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">1</span>
-                                        <span style="font-size: 0.85rem; color: #666;">架构设计</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                        <span style="width: 16px; height: 16px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">2</span>
-                                        <span style="font-size: 0.85rem; color: #666;">目录规划</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                        <span style="width: 16px; height: 16px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">3</span>
-                                        <span style="font-size: 0.85rem; color: #666;">章节生成</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                                        <span style="width: 16px; height: 16px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">4</span>
-                                        <span style="font-size: 0.85rem; color: #666;">内容定稿</span>
-                                    </div>
-                                </div>
+                        #         <div style="space-y: 0.5rem;">
+                        #             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        #                 <span style="width: 16px; height: 16px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">1</span>
+                        #                 <span style="font-size: 0.85rem; color: #666;">架构设计</span>
+                        #             </div>
+                        #             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        #                 <span style="width: 16px; height: 16px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">2</span>
+                        #                 <span style="font-size: 0.85rem; color: #666;">目录规划</span>
+                        #             </div>
+                        #             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        #                 <span style="width: 16px; height: 16px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">3</span>
+                        #                 <span style="font-size: 0.85rem; color: #666;">章节生成</span>
+                        #             </div>
+                        #             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                        #                 <span style="width: 16px; height: 16px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">4</span>
+                        #                 <span style="font-size: 0.85rem; color: #666;">内容定稿</span>
+                        #             </div>
+                        #         </div>
 
-                                <div style="margin-top: 1rem;">
-                                    <button style="width: 100%; padding: 0.5rem; background: #f44336; color: white; border: none; border-radius: 8px; font-size: 0.85rem; cursor: pointer;" disabled>
-                                        ⏸️ 暂停生成
-                                    </button>
-                                </div>
-                            </div>
-                            """)
+                        #         <div style="margin-top: 1rem;">
+                        #             <button style="width: 100%; padding: 0.5rem; background: #f44336; color: white; border: none; border-radius: 8px; font-size: 0.85rem; cursor: pointer;" disabled>
+                        #                 ⏸️ 暂停生成
+                        #             </button>
+                        #         </div>
+                        #     </div>
+                        #     """)
 
                             # AI运行日志（移动到生成进度下面）
                             with gr.Accordion("📋 AI运行日志", open=True):
