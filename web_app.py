@@ -585,16 +585,7 @@ def create_interface():
 
 
 
-                            # 当前章节控制
-                            with gr.Row():
-                                current_chapter = gr.Number(
-                                    label="📖 当前创作章节",
-                                    value=1,
-                                    minimum=1,
-                                    step=1,
-                                    scale=1,
-                                    info="选择要生成或编辑的章节"
-                                )
+
 
                         with gr.Column(scale=1):
                             # AI状态监控
@@ -625,22 +616,7 @@ def create_interface():
                             </div>
                             """)
 
-                            # 高级创作设置（移动到AI状态监控下面）
-                            with gr.Accordion("🎯 高级创作设置", open=True):
-                                user_guidance_input = gr.Textbox(
-                                    label="本章创作指导",
-                                    lines=2,
-                                    value=default_user_guidance,
-                                    placeholder="例如：主角遇到神秘老人，揭示重要线索...",
-                                    info="对本章剧情发展的具体要求（可选）"
-                                )
 
-                                filepath_input = gr.Textbox(
-                                    label="📁 保存路径",
-                                    placeholder="例如: /Users/username/novels/my_novel",
-                                    value=default_filepath,
-                                    info="小说文件的保存目录"
-                                )
 
                     # AI自动化生成控制台
                     gr.HTML("""
@@ -657,6 +633,45 @@ def create_interface():
 
 
 
+                    # 创作参数设置区
+                    gr.HTML("""
+                    <div style="margin: 1.5rem 0 1rem 0;">
+                        <h3 style="margin: 0 0 0.5rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                            🎯 创作参数设置
+                            <span style="background: #fff3e0; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; color: #f57c00;">
+                                必填设置
+                            </span>
+                        </h3>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">请先设置以下参数，然后开始分步骤生成</p>
+                    </div>
+                    """)
+
+                    with gr.Row():
+                        with gr.Column(scale=1):
+                            current_chapter = gr.Number(
+                                label="📖 当前创作章节",
+                                value=1,
+                                minimum=1,
+                                step=1,
+                                info="选择要生成或编辑的章节"
+                            )
+
+                        with gr.Column(scale=2):
+                            user_guidance_input = gr.Textbox(
+                                label="📝 本章创作指导",
+                                lines=2,
+                                value=default_user_guidance,
+                                placeholder="例如：主角遇到神秘老人，揭示重要线索...",
+                                info="对本章剧情发展的具体要求（可选）"
+                            )
+
+                        with gr.Column(scale=2):
+                            filepath_input = gr.Textbox(
+                                label="📁 保存路径",
+                                placeholder="例如: /Users/username/novels/my_novel",
+                                value=default_filepath,
+                                info="小说文件的保存目录"
+                            )
                     # 分步生成按钮组
                     with gr.Row():
                         btn_step1 = gr.Button(
