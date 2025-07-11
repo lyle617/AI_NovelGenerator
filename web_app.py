@@ -569,10 +569,15 @@ def create_interface():
                     with gr.Accordion("📖 基本设置", open=True):
                         topic_input = gr.Textbox(
                             label="📝 主题描述",
-                            lines=3,
-                            placeholder="请详细描述小说的主题、背景和核心故事...",
+                            lines=4,
+                            max_lines=8,
+                            placeholder="请详细描述小说的主题、背景和核心故事...\n\n例如：\n• 故事背景：现代都市/古代仙侠/未来科幻等\n• 主要冲突：角色面临的核心挑战\n• 情感主线：爱情/友情/成长/复仇等\n• 独特元素：让故事与众不同的特色",
                             value=default_topic,
-                            info="详细的主题描述有助于AI生成更符合预期的内容"
+                            info="详细的主题描述有助于AI生成更符合预期的内容",
+                            interactive=True,
+                            show_label=True,
+                            container=True,
+                            scale=1
                         )
 
                         with gr.Row():
@@ -601,10 +606,14 @@ def create_interface():
                     with gr.Accordion("🎭 可选创作元素", open=False):
                         characters_involved_input = gr.Textbox(
                             label="👥 核心人物",
-                            lines=2,
+                            lines=3,
+                            max_lines=6,
                             value=default_characters_involved,
-                            placeholder="描述主要角色的性格、背景和关系...",
-                            info="详细的人物设定有助于保持角色一致性"
+                            placeholder="描述主要角色的性格、背景和关系...\n\n例如：\n• 主角：姓名、年龄、性格特点、能力特长\n• 配角：与主角的关系、作用和特色\n• 反派：动机、能力、与主角的冲突",
+                            info="详细的人物设定有助于保持角色一致性",
+                            interactive=True,
+                            show_label=True,
+                            container=True
                         )
 
                         with gr.Row():
@@ -682,10 +691,14 @@ def create_interface():
                         with gr.Column(scale=2):
                             user_guidance_input = gr.Textbox(
                                 label="📝 本章创作指导",
-                                lines=2,
+                                lines=3,
+                                max_lines=5,
                                 value=default_user_guidance,
-                                placeholder="例如：主角遇到神秘老人，揭示重要线索...",
-                                info="对本章剧情发展的具体要求（可选）"
+                                placeholder="例如：主角遇到神秘老人，揭示重要线索...\n\n可以包括：\n• 本章的主要情节发展\n• 角色的行为和对话要求\n• 场景描述的重点\n• 情感基调和氛围",
+                                info="对本章剧情发展的具体要求（可选）",
+                                interactive=True,
+                                show_label=True,
+                                container=True
                             )
 
                         with gr.Column(scale=2):
