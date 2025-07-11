@@ -552,21 +552,8 @@ def create_interface():
                     #     </div>
                     #     """)
 
-                    # 小说基础参数设置区
-                    gr.HTML("""
-                    <div style="margin: 1.5rem 0 1rem 0;">
-                        <h3 style="margin: 0 0 0.5rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
-                            📖 小说基础参数设置
-                            <span style="background: #e3f2fd; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; color: #1976d2;">
-                                可直接编辑
-                            </span>
-                        </h3>
-                        <p style="margin: 0; color: #666; font-size: 0.9rem;">设置小说的基本信息，这些参数将影响AI生成的内容风格和结构</p>
-                    </div>
-                    """)
-
-                    # 基本设置 - 可折叠
-                    with gr.Accordion("📖 基本设置", open=True):
+                    # 小说设置 - 简化版
+                    with gr.Accordion("📖 小说设置", open=True):
                         topic_input = gr.Textbox(
                             label="📝 主题描述",
                             lines=4,
@@ -602,8 +589,8 @@ def create_interface():
                                 info="每章的目标字数"
                             )
 
-                    # 可选元素 - 可折叠
-                    with gr.Accordion("🎭 可选创作元素", open=False):
+                    # 高级设置 - 默认折叠
+                    with gr.Accordion("🎭 高级设置 (可选)", open=False):
                         characters_involved_input = gr.Textbox(
                             label="👥 核心人物",
                             lines=3,
@@ -650,35 +637,9 @@ def create_interface():
 
 
 
-                    # AI自动化生成控制台
-                    gr.HTML("""
-                    <div style="margin: 1.5rem 0 1rem 0;">
-                        <h3 style="margin: 0 0 0.5rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
-                            🚀 AI自动化生成流程
-                            <span style="background: #e8f5e8; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; color: #2e7d32;">
-                                一键生成
-                            </span>
-                        </h3>
-                        <p style="margin: 0; color: #666; font-size: 0.9rem;">AI将根据您的设置自动生成完整小说，您也可以分步骤控制生成过程</p>
-                    </div>
-                    """)
-
-
-
-                    # 创作参数设置区
-                    gr.HTML("""
-                    <div style="margin: 1.5rem 0 1rem 0;">
-                        <h3 style="margin: 0 0 0.5rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
-                            🎯 创作参数设置
-                            <span style="background: #fff3e0; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; color: #f57c00;">
-                                必填设置
-                            </span>
-                        </h3>
-                        <p style="margin: 0; color: #666; font-size: 0.9rem;">请先设置以下参数，然后开始分步骤生成</p>
-                    </div>
-                    """)
-
-                    with gr.Row():
+                    # 创作设置 - 简化版
+                    with gr.Accordion("🎯 创作设置", open=True):
+                        with gr.Row():
                         with gr.Column(scale=1):
                             current_chapter = gr.Number(
                                 label="📖 当前创作章节",
@@ -708,164 +669,76 @@ def create_interface():
                                 value=default_filepath,
                                 info="小说文件的保存目录"
                             )
-                    # 分步生成按钮组
+                    # AI生成步骤
                     with gr.Row():
-                        btn_step1 = gr.Button(
-                            "📋 第一步：生成小说架构",
-                            variant="primary",
-                            elem_classes=["primary-button"],
-                            scale=1,
-                            size="lg"
-                        )
-                        btn_step2 = gr.Button(
-                            "📑 第二步：生成章节目录",
-                            variant="secondary",
-                            interactive=False,
-                            scale=1,
-                            size="lg"
-                        )
-
-                    with gr.Row():
-                        btn_step3 = gr.Button(
-                            "📝 第三步：生成指定章节",
-                            variant="secondary",
-                            interactive=False,
-                            scale=1,
-                            size="lg"
-                        )
-                        btn_step4 = gr.Button(
-                            "✅ 第四步：内容定稿优化",
-                            variant="secondary",
-                            interactive=False,
-                            scale=1,
-                            size="lg"
-                        )
+                        btn_step1 = gr.Button("📋 生成架构", variant="primary", scale=1)
+                        btn_step2 = gr.Button("📑 生成目录", variant="secondary", interactive=False, scale=1)
+                        btn_step3 = gr.Button("📝 生成章节", variant="secondary", interactive=False, scale=1)
+                        btn_step4 = gr.Button("✅ 内容定稿", variant="secondary", interactive=False, scale=1)
                     # AI生成结果展示区 - 左右分栏布局
                     with gr.Row():
                         # 左侧：生成控制和日志区域 (40%)
                         with gr.Column(scale=2):
-                            # AI运行日志和步骤状态
-                            with gr.Accordion("📋 AI运行日志 & 步骤状态", open=True):
-                                # 步骤状态指示器
-                                gr.HTML("""
-                                <div style="margin-bottom: 1rem; padding: 0.75rem; background: #f8f9fa; border-radius: 8px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                                        <strong style="font-size: 0.9rem; color: #333;">🎯 当前进度</strong>
-                                        <span style="font-size: 0.8rem; color: #666;">请按顺序完成</span>
-                                    </div>
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <div style="flex: 1; padding: 0.4rem; background: #e9ecef; border-radius: 6px; text-align: center; font-size: 0.8rem; color: #495057;">
-                                            📋 架构
-                                        </div>
-                                        <div style="flex: 1; padding: 0.4rem; background: #e9ecef; border-radius: 6px; text-align: center; font-size: 0.8rem; color: #495057;">
-                                            📑 目录
-                                        </div>
-                                        <div style="flex: 1; padding: 0.4rem; background: #e9ecef; border-radius: 6px; text-align: center; font-size: 0.8rem; color: #495057;">
-                                            📝 章节
-                                        </div>
-                                        <div style="flex: 1; padding: 0.4rem; background: #e9ecef; border-radius: 6px; text-align: center; font-size: 0.8rem; color: #495057;">
-                                            ✅ 定稿
-                                        </div>
-                                    </div>
-                                </div>
-                                """)
+                            # AI运行日志
+                            log_output = gr.Textbox(
+                                label="📋 AI运行日志",
+                                lines=12,
+                                max_lines=20,
+                                interactive=False,
+                                value="🤖 AI小说生成器已启动\n💡 请先配置AI模型，然后按步骤创作\n",
+                                elem_classes=["log-container"]
+                            )
 
-                                log_output = gr.Textbox(
-                                    label="",
-                                    lines=8,
-                                    max_lines=15,
-                                    interactive=False,
-                                    value="🤖 AI小说生成器已启动 - 分步生成模式\n💡 请先在\"模型配置\"页面配置AI模型\n🎯 然后按步骤进行创作：架构 → 目录 → 章节 → 定稿\n📋 每步完成后请确认内容质量再进行下一步\n",
-                                    elem_classes=["log-container"],
-                                    show_label=False
-                                )
-
-                                with gr.Row():
-                                    btn_clear_log = gr.Button("🗑️ 清空日志", variant="secondary", scale=1)
-                                    btn_export_log = gr.Button("📤 导出日志", variant="secondary", scale=1)
-
-                        # 右侧：文件预览编辑区域 (60%) - 所见即所得
+                        # 右侧：内容预览编辑区域
                         with gr.Column(scale=3):
-                            gr.HTML("""
-                            <div style="margin-bottom: 1rem;">
-                                <h4 style="margin: 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
-                                    📁 小说文件管理 & 预览
-                                    <span style="background: #e3f2fd; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem; color: #1976d2;">
-                                        所见即所得
-                                    </span>
-                                </h4>
-                                <p style="margin: 0; color: #666; font-size: 0.85rem;">AI生成的内容将实时显示在下方，您可以直接查看和编辑</p>
-                            </div>
-                            """)
-
-                            # 文件管理面板 - 使用Tab组织
+                            # 文件预览Tab
                             with gr.Tabs():
                                 # 小说架构
-                                with gr.Tab("📋 小说架构"):
-                                    with gr.Row():
-                                        btn_load_architecture = gr.Button("📥 加载架构文件", scale=1)
-                                        btn_save_architecture = gr.Button("💾 保存修改", scale=1)
-                                        btn_refresh_architecture = gr.Button("🔄 刷新显示", scale=1)
+                                with gr.Tab("📋 架构"):
                                     architecture_content = gr.Textbox(
                                         label="",
-                                        lines=15,
-                                        placeholder="📋 小说架构将在这里显示...\n\n点击上方按钮加载现有架构文件，或点击左侧\"第一步：生成小说架构\"开始AI生成。\n\n生成后的架构内容将自动显示在此处，您可以直接编辑和修改。",
+                                        lines=18,
+                                        placeholder="📋 小说架构将在这里显示...\n\n点击左侧\"生成架构\"按钮开始AI生成。",
                                         interactive=True,
                                         show_label=False
                                     )
 
                                 # 章节蓝图
-                                with gr.Tab("📑 章节蓝图"):
-                                    with gr.Row():
-                                        btn_load_blueprint = gr.Button("📥 加载蓝图文件", scale=1)
-                                        btn_save_blueprint = gr.Button("💾 保存修改", scale=1)
-                                        btn_refresh_blueprint = gr.Button("🔄 刷新显示", scale=1)
+                                with gr.Tab("📑 目录"):
                                     blueprint_content = gr.Textbox(
                                         label="",
-                                        lines=15,
-                                        placeholder="📑 章节蓝图将在这里显示...\n\n完成架构生成后，点击左侧\"第二步：生成章节目录\"来生成详细的章节蓝图。\n\n生成后的蓝图内容将自动显示在此处，您可以直接编辑章节安排。",
+                                        lines=18,
+                                        placeholder="📑 章节目录将在这里显示...\n\n完成架构后，点击\"生成目录\"按钮。",
                                         interactive=True,
                                         show_label=False
                                     )
 
                                 # 当前章节内容
-                                with gr.Tab("📝 当前章节"):
-                                    with gr.Row():
-                                        btn_load_current_chapter = gr.Button("📥 加载章节文件", scale=1)
-                                        btn_save_current_chapter = gr.Button("💾 保存修改", scale=1)
-                                        btn_refresh_current_chapter = gr.Button("🔄 刷新显示", scale=1)
+                                with gr.Tab("📝 章节"):
                                     chapter_content = gr.Textbox(
                                         label="",
-                                        lines=15,
-                                        placeholder="📝 当前章节内容将在这里显示...\n\n完成前两步后，点击左侧\"第三步：生成指定章节\"来生成具体章节内容。\n\n生成后的章节内容将自动显示在此处，您可以直接编辑和完善。",
+                                        lines=18,
+                                        placeholder="📝 章节内容将在这里显示...\n\n完成前两步后，点击\"生成章节\"按钮。",
                                         interactive=True,
                                         show_label=False
                                     )
 
                                 # 角色状态
-                                with gr.Tab("👥 角色状态"):
-                                    with gr.Row():
-                                        btn_load_character = gr.Button("📥 加载角色文件", scale=1)
-                                        btn_save_character = gr.Button("💾 保存修改", scale=1)
-                                        btn_refresh_character = gr.Button("🔄 刷新显示", scale=1)
+                                with gr.Tab("👥 角色"):
                                     character_content = gr.Textbox(
                                         label="",
-                                        lines=15,
-                                        placeholder="👥 角色状态信息将在这里显示...\n\n在创作过程中，AI会自动维护角色状态信息。\n\n您可以在此查看和编辑角色的发展状态。",
+                                        lines=18,
+                                        placeholder="👥 角色状态信息将在这里显示...",
                                         interactive=True,
                                         show_label=False
                                     )
 
                                 # 全局摘要
-                                with gr.Tab("📊 全局摘要"):
-                                    with gr.Row():
-                                        btn_load_summary = gr.Button("📥 加载摘要文件", scale=1)
-                                        btn_save_summary = gr.Button("💾 保存修改", scale=1)
-                                        btn_refresh_summary = gr.Button("🔄 刷新显示", scale=1)
+                                with gr.Tab("📊 摘要"):
                                     summary_content = gr.Textbox(
                                         label="",
-                                        lines=15,
-                                        placeholder="📊 全局摘要将在这里显示...\n\n在创作过程中，AI会自动生成和更新全局摘要。\n\n您可以在此查看整体创作进度和内容概览。",
+                                        lines=18,
+                                        placeholder="📊 全局摘要将在这里显示...",
                                         interactive=True,
                                         show_label=False
                                     )
@@ -1586,54 +1459,9 @@ def create_interface():
             outputs=log_output
         )
 
-        # 文件管理事件
-        btn_load_architecture.click(
-            fn=lambda filepath: handle_load_file(filepath, "Novel_architecture.txt"),
-            inputs=filepath_input,
-            outputs=[architecture_content, log_output]
-        )
+        # 简化后的文件管理 - 通过AI生成步骤自动更新内容
 
-        btn_save_architecture.click(
-            fn=lambda filepath, content: handle_save_file(filepath, "Novel_architecture.txt", content),
-            inputs=[filepath_input, architecture_content],
-            outputs=log_output
-        )
 
-        btn_load_blueprint.click(
-            fn=lambda filepath: handle_load_file(filepath, "Novel_directory.txt"),
-            inputs=filepath_input,
-            outputs=[blueprint_content, log_output]
-        )
-
-        btn_save_blueprint.click(
-            fn=lambda filepath, content: handle_save_file(filepath, "Novel_directory.txt", content),
-            inputs=[filepath_input, blueprint_content],
-            outputs=log_output
-        )
-
-        btn_load_character.click(
-            fn=lambda filepath: handle_load_file(filepath, "character_state.txt"),
-            inputs=filepath_input,
-            outputs=[character_content, log_output]
-        )
-
-        btn_save_character.click(
-            fn=lambda filepath, content: handle_save_file(filepath, "character_state.txt", content),
-            inputs=[filepath_input, character_content],
-            outputs=log_output
-        )
-
-        btn_load_summary.click(
-            fn=lambda filepath: handle_load_file(filepath, "global_summary.txt"),
-            inputs=filepath_input,
-            outputs=[summary_content, log_output]
-        )
-
-        btn_save_summary.click(
-            fn=lambda filepath, content: handle_save_file(filepath, "global_summary.txt", content),
-            inputs=[filepath_input, summary_content],
-            outputs=log_output
-        )
 
         return demo
 
