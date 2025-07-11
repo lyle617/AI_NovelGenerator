@@ -1422,7 +1422,7 @@ def create_interface():
                 filepath_input, current_chapter, user_guidance_input,
                 log_output
             ],
-            outputs=[chapter_content, log_output]
+            outputs=[chapter_content, log_output, btn_step4]
         )
 
         btn_step4.click(
@@ -1435,7 +1435,7 @@ def create_interface():
                 filepath_input, current_chapter, chapter_content,
                 log_output
             ],
-            outputs=log_output
+            outputs=[log_output, character_content, summary_content]
         )
 
         # 辅助功能事件
@@ -2075,8 +2075,15 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
                                  embedding_interface, embedding_api_key, embedding_base_url, embedding_model, retrieval_k,
                                  filepath, chapter_num, user_guidance, current_log):
     """处理生成章节草稿事件"""
+    import os
+    from utils import read_file
+
     if not filepath:
-        return "", current_log + app.log_message("❌ 请先设置保存文件路径")
+        return (
+            "",  # chapter_content
+            current_log + app.log_message("❌ 请先设置保存文件路径"),
+            gr.Button("✅ 内容定稿", variant="secondary", interactive=False)  # btn_step4
+        )
 
     try:
         log_msg = current_log + app.log_message(f"🚀 开始生成第{chapter_num}章草稿...")
@@ -2110,20 +2117,43 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
                 return "", f"❌ 生成章节草稿时出错: {str(e)}"
 
         chapter_content, result_msg = generate_task()
-        return chapter_content, log_msg + app.log_message(result_msg)
+        final_log = log_msg + app.log_message(result_msg)
+
+        # 如果生成成功，启用第四步按钮
+        if chapter_content and "✅" in result_msg:
+            next_button = gr.Button("✅ 内容定稿", variant="primary", interactive=True)
+        else:
+            next_button = gr.Button("✅ 内容定稿", variant="secondary", interactive=False)
+
+        return chapter_content, final_log, next_button
 
     except Exception as e:
-        return "", current_log + app.log_message(f"❌ 生成章节草稿时出错: {str(e)}")
+        return (
+            "",  # chapter_content
+            current_log + app.log_message(f"❌ 生成章节草稿时出错: {str(e)}"),
+            gr.Button("✅ 内容定稿", variant="secondary", interactive=False)  # btn_step4
+        )
 
 def handle_finalize_chapter(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
                            embedding_interface, embedding_api_key, embedding_base_url, embedding_model,
                            filepath, chapter_num, chapter_content, current_log):
     """处理定稿章节事件"""
+    import os
+    from utils import read_file, save_string_to_txt
+
     if not filepath:
-        return current_log + app.log_message("❌ 请先设置保存文件路径")
+        return (
+            current_log + app.log_message("❌ 请先设置保存文件路径"),
+            "",  # character_content
+            ""   # summary_content
+        )
 
     if not chapter_content.strip():
-        return current_log + app.log_message("❌ 章节内容为空，无法定稿")
+        return (
+            current_log + app.log_message("❌ 章节内容为空，无法定稿"),
+            "",  # character_content
+            ""   # summary_content
+        )
 
     try:
         log_msg = current_log + app.log_message(f"🚀 开始定稿第{chapter_num}章...")
@@ -2154,10 +2184,29 @@ def handle_finalize_chapter(llm_interface, llm_api_key, llm_base_url, llm_model,
                 return f"❌ 定稿章节时出错: {str(e)}"
 
         result = finalize_task()
-        return log_msg + app.log_message(result)
+        final_log = log_msg + app.log_message(result)
+
+        # 读取更新后的角色状态和全局摘要
+        character_file = os.path.join(filepath, "character_state.txt")
+        summary_file = os.path.join(filepath, "global_summary.txt")
+
+        character_content = ""
+        summary_content = ""
+
+        if "✅" in result:
+            if os.path.exists(character_file):
+                character_content = read_file(character_file)
+            if os.path.exists(summary_file):
+                summary_content = read_file(summary_file)
+
+        return final_log, character_content, summary_content
 
     except Exception as e:
-        return current_log + app.log_message(f"❌ 定稿章节时出错: {str(e)}")
+        return (
+            current_log + app.log_message(f"❌ 定稿章节时出错: {str(e)}"),
+            "",  # character_content
+            ""   # summary_content
+        )
 
 # 辅助功能处理函数
 def handle_consistency_check(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
