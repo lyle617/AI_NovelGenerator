@@ -578,7 +578,7 @@ def create_interface():
                                 label="📊 章节数量",
                                 value=default_num_chapters,
                                 minimum=1,
-                                maximum=100,
+                                maximum=1000,
                                 info="计划创作的总章节数"
                             )
                             word_number_input = gr.Number(
