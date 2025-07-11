@@ -782,6 +782,20 @@ def create_interface():
                                         elem_classes=["scrollable-textbox"]
                                     )
 
+                                # 所有章节内容
+                                with gr.Tab("📚 所有章节"):
+                                    all_chapters_content = gr.Textbox(
+                                        label="",
+                                        lines=15,
+                                        max_lines=300,
+                                        placeholder="📚 所有章节内容将在这里显示...\n\n生成章节后，这里会显示所有已完成的章节。",
+                                        interactive=True,
+                                        show_label=False,
+                                        autoscroll=False,
+                                        container=True,
+                                        elem_classes=["scrollable-textbox"]
+                                    )
+
                                 # 角色状态
                                 with gr.Tab("👥 角色"):
                                     character_content = gr.Textbox(
@@ -1481,7 +1495,7 @@ def create_interface():
                 filepath_input, current_chapter, word_number_input, user_guidance_input,
                 log_output
             ],
-            outputs=[chapter_content, log_output, btn_step4]
+            outputs=[chapter_content, all_chapters_content, log_output, btn_step4]
         )
 
         btn_step4.click(
@@ -1526,7 +1540,7 @@ def create_interface():
             inputs=filepath_input,
             outputs=[
                 log_output, architecture_content, blueprint_content,
-                chapter_content, character_content, summary_content,
+                chapter_content, all_chapters_content, character_content, summary_content,
                 btn_step2, btn_step3, btn_step4
             ]
         )
@@ -1545,7 +1559,7 @@ def create_interface():
                 fn=lambda: handle_filepath_change(default_filepath),
                 outputs=[
                     log_output, architecture_content, blueprint_content,
-                    chapter_content, character_content, summary_content,
+                    chapter_content, all_chapters_content, character_content, summary_content,
                     btn_step2, btn_step3, btn_step4
                 ]
             )
@@ -2162,6 +2176,7 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
     if not filepath:
         return (
             "",  # chapter_content
+            "",  # all_chapters_content
             current_log + app.log_message("❌ 请先设置保存文件路径"),
             gr.Button("✅ 内容定稿", variant="secondary", interactive=False)  # btn_step4
         )
@@ -2195,7 +2210,7 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
                 )
 
                 # 读取生成的章节内容
-                chapter_file = os.path.join(filepath, f"chapter_{chapter_num}.txt")
+                chapter_file = os.path.join(filepath, "chapters", f"chapter_{chapter_num}.txt")
                 chapter_content = read_file(chapter_file)
 
                 return chapter_content, "✅ 章节草稿生成完成！"
@@ -2205,17 +2220,21 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
         chapter_content, result_msg = generate_task()
         final_log = log_msg + app.log_message(result_msg)
 
+        # 加载所有章节内容
+        all_chapters = load_all_chapters(filepath)
+
         # 如果生成成功，启用第四步按钮
         if chapter_content and "✅" in result_msg:
             next_button = gr.Button("✅ 内容定稿", variant="primary", interactive=True)
         else:
             next_button = gr.Button("✅ 内容定稿", variant="secondary", interactive=False)
 
-        return chapter_content, final_log, next_button
+        return chapter_content, all_chapters, final_log, next_button
 
     except Exception as e:
         return (
             "",  # chapter_content
+            "",  # all_chapters_content
             current_log + app.log_message(f"❌ 生成章节草稿时出错: {str(e)}"),
             gr.Button("✅ 内容定稿", variant="secondary", interactive=False)  # btn_step4
         )
@@ -2245,7 +2264,9 @@ def handle_finalize_chapter(llm_interface, llm_api_key, llm_base_url, llm_model,
         log_msg = current_log + app.log_message(f"🚀 开始定稿第{chapter_num}章...")
 
         # 先保存当前章节内容
-        chapter_file = os.path.join(filepath, f"chapter_{chapter_num}.txt")
+        chapter_file = os.path.join(filepath, "chapters", f"chapter_{chapter_num}.txt")
+        # 确保chapters目录存在
+        os.makedirs(os.path.dirname(chapter_file), exist_ok=True)
         save_string_to_txt(chapter_content, chapter_file)
 
         def finalize_task():
@@ -2435,12 +2456,27 @@ def check_file_status_and_init_ui(filepath):
         result['summary_content'] = read_file(summary_file)
         messages.append("✅ 已加载全局摘要")
 
-    # 检查是否有章节文件（检查chapter_1.txt作为示例）
-    chapter_file = os.path.join(filepath, "chapter_1.txt")
-    if os.path.exists(chapter_file):
-        result['chapter_content'] = read_file(chapter_file)
-        result['btn_step4_state'] = gr.Button("✅ 内容定稿", variant="primary", interactive=True)
-        messages.append("✅ 已加载第1章内容")
+    # 检查是否有章节文件（检查chapters目录下是否有任何章节文件）
+    chapters_dir = os.path.join(filepath, "chapters")
+    if os.path.exists(chapters_dir):
+        # 查找最新的章节文件
+        chapter_files = [f for f in os.listdir(chapters_dir) if f.startswith("chapter_") and f.endswith(".txt")]
+        if chapter_files:
+            # 按章节号排序，取最新的
+            chapter_numbers = []
+            for f in chapter_files:
+                try:
+                    num = int(f.replace("chapter_", "").replace(".txt", ""))
+                    chapter_numbers.append(num)
+                except ValueError:
+                    continue
+
+            if chapter_numbers:
+                latest_chapter = max(chapter_numbers)
+                latest_chapter_file = os.path.join(chapters_dir, f"chapter_{latest_chapter}.txt")
+                result['chapter_content'] = read_file(latest_chapter_file)
+                result['btn_step4_state'] = gr.Button("✅ 内容定稿", variant="primary", interactive=True)
+                messages.append(f"✅ 已加载第{latest_chapter}章内容")
 
     if messages:
         result['log_message'] = "🔄 恢复创作进度：\n" + "\n".join(messages)
@@ -2449,14 +2485,51 @@ def check_file_status_and_init_ui(filepath):
 
     return result
 
+def load_all_chapters(filepath):
+    """加载所有章节内容"""
+    if not filepath:
+        return ""
+
+    chapters_dir = os.path.join(filepath, "chapters")
+    if not os.path.exists(chapters_dir):
+        return ""
+
+    # 获取所有章节文件
+    chapter_files = [f for f in os.listdir(chapters_dir) if f.startswith("chapter_") and f.endswith(".txt")]
+    if not chapter_files:
+        return ""
+
+    # 按章节号排序
+    chapter_numbers = []
+    for f in chapter_files:
+        try:
+            num = int(f.replace("chapter_", "").replace(".txt", ""))
+            chapter_numbers.append(num)
+        except ValueError:
+            continue
+
+    chapter_numbers.sort()
+
+    # 读取所有章节内容
+    all_content = []
+    for num in chapter_numbers:
+        chapter_file = os.path.join(chapters_dir, f"chapter_{num}.txt")
+        content = read_file(chapter_file)
+        if content:
+            all_content.append(f"=== 第{num}章 ===\n\n{content}\n\n")
+
+    return "\n".join(all_content)
+
 def handle_filepath_change(filepath):
     """处理文件路径变化事件"""
     status = check_file_status_and_init_ui(filepath)
+    all_chapters = load_all_chapters(filepath)
     return (
         app.log_message(status['log_message']),  # log_output
         status['architecture_content'],          # architecture_content
         status['blueprint_content'],             # blueprint_content
         status['chapter_content'],               # chapter_content
+        all_chapters,                            # all_chapters_content
         status['character_content'],             # character_content
         status['summary_content'],               # summary_content
         status['btn_step2_state'],               # btn_step2
