@@ -655,54 +655,40 @@ def create_interface():
                     </div>
                     """)
 
-                    # 自动化生成按钮组
+
+
+                    # 分步生成按钮组
                     with gr.Row():
-                        with gr.Column(scale=2):
-                            # 一键生成（主要功能）
-                            btn_auto_generate = gr.Button(
-                                "🤖 AI一键生成完整小说",
-                                variant="primary",
-                                elem_classes=["primary-button"],
-                                size="lg"
-                            )
-                            gr.HTML("""
-                            <div style="margin: 0.5rem 0; padding: 0.5rem; background: #e3f2fd; border-radius: 8px; font-size: 0.85rem; color: #1565c0;">
-                                💡 AI将自动完成：架构设计 → 目录规划 → 逐章生成 → 内容优化
-                            </div>
-                            """)
+                        btn_step1 = gr.Button(
+                            "📋 第一步：生成小说架构",
+                            variant="primary",
+                            elem_classes=["primary-button"],
+                            scale=1,
+                            size="lg"
+                        )
+                        btn_step2 = gr.Button(
+                            "📑 第二步：生成章节目录",
+                            variant="secondary",
+                            interactive=False,
+                            scale=1,
+                            size="lg"
+                        )
 
-                        with gr.Column(scale=2):
-                            # 分步生成（高级控制）
-                            gr.HTML("""
-                            <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: #666; text-align: center;">
-                                或分步骤控制生成过程
-                            </div>
-                            """)
-                            with gr.Row():
-                                btn_step1 = gr.Button(
-                                    "📋 架构",
-                                    variant="secondary",
-                                    scale=1
-                                )
-                                btn_step2 = gr.Button(
-                                    "📑 目录",
-                                    variant="secondary",
-                                    interactive=True,
-                                    scale=1
-                                )
-                                btn_step3 = gr.Button(
-                                    "📝 章节",
-                                    variant="secondary",
-                                    interactive=True,
-                                    scale=1
-                                )
-                                btn_step4 = gr.Button(
-                                    "✅ 定稿",
-                                    variant="secondary",
-                                    interactive=True,
-                                    scale=1
-                                )
-
+                    with gr.Row():
+                        btn_step3 = gr.Button(
+                            "📝 第三步：生成指定章节",
+                            variant="secondary",
+                            interactive=False,
+                            scale=1,
+                            size="lg"
+                        )
+                        btn_step4 = gr.Button(
+                            "✅ 第四步：内容定稿优化",
+                            variant="secondary",
+                            interactive=False,
+                            scale=1,
+                            size="lg"
+                        )
                     # AI生成结果展示区 - 左右分栏布局
                     with gr.Row():
                         # 左侧：生成控制和日志区域 (40%)
