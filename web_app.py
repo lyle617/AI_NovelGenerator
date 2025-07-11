@@ -1466,7 +1466,7 @@ def create_interface():
             inputs=[
                 llm_interface, llm_api_key, llm_base_url,
                 llm_model, temperature, max_tokens, timeout,
-                filepath_input, log_output
+                filepath_input, num_chapters_input, user_guidance_input, log_output
             ],
             outputs=[log_output, blueprint_content, btn_step3]
         )
@@ -2097,7 +2097,7 @@ def handle_generate_architecture(llm_interface, llm_api_key, llm_base_url, llm_m
         )
 
 def handle_generate_blueprint(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
-                             filepath, current_log):
+                             filepath, num_chapters, user_guidance, current_log):
     """处理生成章节蓝图事件"""
     import os
     from utils import read_file
@@ -2120,6 +2120,8 @@ def handle_generate_blueprint(llm_interface, llm_api_key, llm_base_url, llm_mode
                     base_url=llm_base_url,
                     llm_model=llm_model,
                     filepath=filepath,
+                    number_of_chapters=int(num_chapters),
+                    user_guidance=user_guidance,
                     temperature=temperature,
                     max_tokens=int(max_tokens),
                     timeout=int(timeout)
