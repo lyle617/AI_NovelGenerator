@@ -114,7 +114,8 @@ class NovelGeneratorWebApp:
     def save_config_to_file(self, llm_config, embedding_config, novel_params):
         """保存配置到文件"""
         try:
-            config_data = {
+            # 分离全局配置和小说特定配置
+            global_config_data = {
                 "last_interface_format": llm_config["interface_format"],
                 "last_embedding_interface_format": embedding_config["interface_format"],
                 "llm_configs": {
@@ -134,20 +135,63 @@ class NovelGeneratorWebApp:
                         "model_name": embedding_config["model_name"],
                         "retrieval_k": embedding_config["retrieval_k"]
                     }
-                },
-                "other_params": novel_params
+                }
             }
 
-            success = save_config(config_data, self.config_file)
+            # 保存全局配置（不包含小说参数）
+            success = save_config(global_config_data, self.config_file)
+            if not success:
+                return "❌ 全局配置保存失败！"
+
+            # 保存小说特定配置
+            novel_config_result = self.save_novel_config(novel_params)
+
             if success:
-                self.loaded_config = config_data
-                return "✅ 配置保存成功！"
+                self.loaded_config = global_config_data
+                return f"✅ 配置保存成功！{novel_config_result}"
             else:
                 return "❌ 配置保存失败！"
         except Exception as e:
             return f"❌ 保存配置时出错: {str(e)}"
 
-    def load_config_from_file(self):
+    def save_novel_config(self, novel_params):
+        """保存小说特定配置到小说目录下"""
+        try:
+            filepath = novel_params.get("filepath", "").strip()
+            if not filepath:
+                return " 小说参数未保存（未设置保存路径）"
+
+            # 确保小说目录存在
+            os.makedirs(filepath, exist_ok=True)
+
+            # 小说配置文件路径
+            novel_config_file = os.path.join(filepath, "novel_config.json")
+
+            # 保存小说参数
+            success = save_config(novel_params, novel_config_file)
+            if success:
+                return " 小说参数已保存到项目目录"
+            else:
+                return " 小说参数保存失败"
+        except Exception as e:
+            return f" 小说参数保存出错: {str(e)}"
+
+    def load_novel_config(self, filepath):
+        """从小说目录加载小说特定配置"""
+        try:
+            if not filepath or not filepath.strip():
+                return {}
+
+            novel_config_file = os.path.join(filepath.strip(), "novel_config.json")
+            if not os.path.exists(novel_config_file):
+                return {}
+
+            return load_config(novel_config_file)
+        except Exception as e:
+            print(f"加载小说配置出错: {str(e)}")
+            return {}
+
+    def load_config_from_file(self, filepath=None):
         """从文件加载配置"""
         try:
             cfg = load_config(self.config_file)
@@ -164,8 +208,13 @@ class NovelGeneratorWebApp:
             embedding_configs = cfg.get("embedding_configs", {})
             embedding_config = embedding_configs.get(last_embedding, {})
 
-            # 提取其他参数
-            other_params = cfg.get("other_params", {})
+            # 加载小说特定配置（如果提供了文件路径）
+            novel_params = {}
+            if filepath:
+                novel_params = self.load_novel_config(filepath)
+            else:
+                # 兼容旧版本：从全局配置中读取
+                novel_params = cfg.get("other_params", {})
 
             return {
                 "llm_interface": last_llm,
@@ -180,16 +229,16 @@ class NovelGeneratorWebApp:
                 "embedding_base_url": embedding_config.get("base_url", "https://api.openai.com/v1"),
                 "embedding_model": embedding_config.get("model_name", "text-embedding-ada-002"),
                 "retrieval_k": embedding_config.get("retrieval_k", 4),
-                "topic": other_params.get("topic", ""),
-                "genre": other_params.get("genre", "玄幻"),
-                "num_chapters": other_params.get("num_chapters", 10),
-                "word_number": other_params.get("word_number", 3000),
-                "filepath": other_params.get("filepath", ""),
-                "user_guidance": other_params.get("user_guidance", ""),
-                "characters_involved": other_params.get("characters_involved", ""),
-                "key_items": other_params.get("key_items", ""),
-                "scene_location": other_params.get("scene_location", ""),
-                "time_constraint": other_params.get("time_constraint", "")
+                "topic": novel_params.get("topic", ""),
+                "genre": novel_params.get("genre", "玄幻"),
+                "num_chapters": novel_params.get("num_chapters", 10),
+                "word_number": novel_params.get("word_number", 3000),
+                "filepath": novel_params.get("filepath", ""),
+                "user_guidance": novel_params.get("user_guidance", ""),
+                "characters_involved": novel_params.get("characters_involved", ""),
+                "key_items": novel_params.get("key_items", ""),
+                "scene_location": novel_params.get("scene_location", ""),
+                "time_constraint": novel_params.get("time_constraint", "")
             }, "✅ 配置加载成功！"
         except Exception as e:
             return None, f"❌ 加载配置时出错: {str(e)}"
@@ -575,25 +624,49 @@ def create_interface():
 
                 # Tab 1: 主要功能
                 with gr.Tab("🤖 AI自动创作", id="main"):
-                    # AI创作控制台
-                    # with gr.Row():
-                    #     ai_control_panel = gr.HTML("""
-                    #     <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    #                 color: white; padding: 1.5rem; border-radius: 15px; margin-bottom: 1.5rem;
-                    #                 box-shadow: 0 4px 20px rgba(102,126,234,0.3);">
-                    #         <div style="display: flex; justify-content: space-between; align-items: center;">
-                    #             <div>
-                    #                 <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">
-                    #                     基于大语言模型的全自动小说创作系统，从构思到成稿一键完成
-                    #                 </p>
-                    #             </div>
-                    #             <div style="text-align: center;">
-                    #                 <div style="font-size: 2.5rem; margin-bottom: 0.3rem;">🎯</div>
-                    #                 <div style="font-size: 0.85rem; opacity: 0.9;">AI驱动</div>
-                    #             </div>
-                    #         </div>
-                    #     </div>
-                    #     """)
+                    # 项目管理区域
+                    with gr.Accordion("📁 小说项目管理", open=True):
+                        gr.HTML("""
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    color: white; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;
+                                    text-align: center;">
+                            <h3 style="margin: 0 0 0.5rem 0;">🎯 开始您的创作之旅</h3>
+                            <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">
+                                请先创建新项目或加载现有项目，然后开始AI自动创作
+                            </p>
+                        </div>
+                        """)
+
+                        with gr.Row():
+                            with gr.Column(scale=2):
+                                project_path_input = gr.Textbox(
+                                    label="📁 项目路径",
+                                    placeholder="例如: /Users/username/novels/我的小说",
+                                    value=default_filepath,
+                                    info="小说项目的保存目录（每个小说一个独立目录）"
+                                )
+                            with gr.Column(scale=1):
+                                with gr.Row():
+                                    btn_create_project = gr.Button(
+                                        "📝 创建新项目",
+                                        variant="primary",
+                                        scale=1
+                                    )
+                                    btn_load_project = gr.Button(
+                                        "📂 加载项目",
+                                        variant="secondary",
+                                        scale=1
+                                    )
+
+                        # 项目状态显示
+                        project_status = gr.HTML("""
+                        <div style="background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                                    border-left: 4px solid #6c757d;">
+                            <div style="color: #6c757d; font-size: 0.9rem;">
+                                ⚠️ 请先创建或加载一个小说项目
+                            </div>
+                        </div>
+                        """)
 
                     # 小说设置 - 简化版
                     with gr.Accordion("📖 小说设置", open=True):
@@ -709,12 +782,14 @@ def create_interface():
                                 )
 
                             with gr.Column(scale=2):
-                                filepath_input = gr.Textbox(
-                                    label="📁 保存路径",
-                                    placeholder="例如: /Users/username/novels/my_novel",
-                                    value=default_filepath,
-                                    info="小说文件的保存目录"
-                                )
+                                gr.HTML("""
+                                <div style="background: #e3f2fd; border-radius: 8px; padding: 0.8rem; margin: 0.5rem 0;
+                                            border-left: 4px solid #2196f3;">
+                                    <div style="color: #1565c0; font-size: 0.85rem;">
+                                        💡 提示：项目路径已在上方"项目管理"区域设置，小说配置将自动保存到对应项目目录
+                                    </div>
+                                </div>
+                                """)
                     # AI生成步骤
                     with gr.Row():
                         btn_step1 = gr.Button("📋 生成架构", variant="primary", scale=1)
@@ -784,17 +859,48 @@ def create_interface():
 
                                 # 所有章节内容
                                 with gr.Tab("📚 所有章节"):
-                                    all_chapters_content = gr.Textbox(
+                                    # 章节导航控制
+                                    with gr.Row():
+                                        with gr.Column(scale=1):
+                                            chapter_selector = gr.Dropdown(
+                                                label="选择章节",
+                                                choices=[],
+                                                value=None,
+                                                interactive=True,
+                                                allow_custom_value=False
+                                            )
+                                        with gr.Column(scale=2):
+                                            with gr.Row():
+                                                btn_prev_chapter = gr.Button("⬅️ 上一章", size="sm", scale=1)
+                                                btn_next_chapter = gr.Button("下一章 ➡️", size="sm", scale=1)
+                                                btn_refresh_chapters = gr.Button("🔄 刷新", size="sm", scale=1)
+
+                                    # 单个章节内容显示
+                                    single_chapter_content = gr.Textbox(
                                         label="",
                                         lines=15,
                                         max_lines=300,
-                                        placeholder="📚 所有章节内容将在这里显示...\n\n生成章节后，这里会显示所有已完成的章节。",
+                                        placeholder="📚 选择章节查看内容...\n\n从上方下拉菜单选择要查看的章节。",
                                         interactive=True,
                                         show_label=False,
                                         autoscroll=False,
                                         container=True,
                                         elem_classes=["scrollable-textbox"]
                                     )
+
+                                    # 所有章节内容（保留原有功能）
+                                    with gr.Accordion("📖 查看所有章节", open=False):
+                                        all_chapters_content = gr.Textbox(
+                                            label="",
+                                            lines=15,
+                                            max_lines=300,
+                                            placeholder="📚 所有章节内容将在这里显示...\n\n生成章节后，这里会显示所有已完成的章节。",
+                                            interactive=True,
+                                            show_label=False,
+                                            autoscroll=False,
+                                            container=True,
+                                            elem_classes=["scrollable-textbox"]
+                                        )
 
                                 # 角色状态
                                 with gr.Tab("👥 角色"):
@@ -1386,12 +1492,14 @@ def create_interface():
                 embedding_interface, embedding_api_key, embedding_base_url,
                 embedding_model, retrieval_k,
                 topic_input, genre_input, num_chapters_input,
-                word_number_input, filepath_input, user_guidance_input,
+                word_number_input, project_path_input, user_guidance_input,
                 characters_involved_input, key_items_input,
                 scene_location_input, time_constraint_input,
                 log_output
             ]
         )
+
+
 
         btn_save_config.click(
             fn=handle_save_config,
@@ -1401,11 +1509,24 @@ def create_interface():
                 embedding_interface, embedding_api_key, embedding_base_url,
                 embedding_model, retrieval_k,
                 topic_input, genre_input, num_chapters_input,
-                word_number_input, filepath_input, user_guidance_input,
+                word_number_input, project_path_input, user_guidance_input,
                 characters_involved_input, key_items_input,
                 scene_location_input, time_constraint_input
             ],
             outputs=log_output
+        )
+
+        # 项目管理事件
+        btn_create_project.click(
+            fn=handle_create_project,
+            inputs=project_path_input,
+            outputs=[project_path_input, project_status, log_output]
+        )
+
+        btn_load_project.click(
+            fn=handle_load_project,
+            inputs=project_path_input,
+            outputs=[project_path_input, project_status, log_output]
         )
 
         # 测试配置事件
@@ -1469,7 +1590,7 @@ def create_interface():
                 llm_interface, llm_api_key, llm_base_url,
                 llm_model, temperature, max_tokens, timeout,
                 topic_input, genre_input, num_chapters_input,
-                word_number_input, filepath_input, user_guidance_input,
+                word_number_input, project_path_input, user_guidance_input,
                 log_output
             ],
             outputs=[log_output, architecture_content, btn_step2]
@@ -1480,7 +1601,7 @@ def create_interface():
             inputs=[
                 llm_interface, llm_api_key, llm_base_url,
                 llm_model, temperature, max_tokens, timeout,
-                filepath_input, num_chapters_input, user_guidance_input, log_output
+                project_path_input, num_chapters_input, user_guidance_input, log_output
             ],
             outputs=[log_output, blueprint_content, btn_step3]
         )
@@ -1492,7 +1613,7 @@ def create_interface():
                 llm_model, temperature, max_tokens, timeout,
                 embedding_interface, embedding_api_key, embedding_base_url,
                 embedding_model, retrieval_k,
-                filepath_input, current_chapter, word_number_input, user_guidance_input,
+                project_path_input, current_chapter, word_number_input, user_guidance_input,
                 log_output
             ],
             outputs=[chapter_content, all_chapters_content, log_output, btn_step4]
@@ -1505,7 +1626,7 @@ def create_interface():
                 llm_model, temperature, max_tokens, timeout,
                 embedding_interface, embedding_api_key, embedding_base_url,
                 embedding_model,
-                filepath_input, current_chapter, word_number_input, chapter_content,
+                project_path_input, current_chapter, word_number_input, chapter_content,
                 log_output
             ],
             outputs=[log_output, character_content, summary_content]
@@ -1517,37 +1638,65 @@ def create_interface():
             inputs=[
                 llm_interface, llm_api_key, llm_base_url,
                 llm_model, temperature, max_tokens, timeout,
-                filepath_input, current_chapter, log_output
+                project_path_input, current_chapter, log_output
             ],
             outputs=log_output
         )
 
         btn_import_knowledge.click(
             fn=handle_import_knowledge,
-            inputs=[filepath_input, log_output],
+            inputs=[project_path_input, log_output],
             outputs=log_output
         )
 
         btn_clear_vectorstore.click(
             fn=handle_clear_vectorstore,
-            inputs=[filepath_input, log_output],
+            inputs=[project_path_input, log_output],
             outputs=log_output
         )
 
-        # 文件路径变化时自动检查文件状态
-        filepath_input.change(
+        # 章节切换事件
+        chapter_selector.change(
+            fn=handle_chapter_selection,
+            inputs=[project_path_input, chapter_selector],
+            outputs=single_chapter_content
+        )
+
+        btn_prev_chapter.click(
+            fn=handle_prev_chapter,
+            inputs=[project_path_input, chapter_selector],
+            outputs=[chapter_selector, single_chapter_content]
+        )
+
+        btn_next_chapter.click(
+            fn=handle_next_chapter,
+            inputs=[project_path_input, chapter_selector],
+            outputs=[chapter_selector, single_chapter_content]
+        )
+
+        btn_refresh_chapters.click(
+            fn=handle_refresh_chapters,
+            inputs=[project_path_input, chapter_selector],
+            outputs=[chapter_selector, single_chapter_content]
+        )
+
+        # 项目路径变化时自动检查文件状态并加载小说配置
+        project_path_input.change(
             fn=handle_filepath_change,
-            inputs=filepath_input,
+            inputs=project_path_input,
             outputs=[
                 log_output, architecture_content, blueprint_content,
                 chapter_content, all_chapters_content, character_content, summary_content,
-                btn_step2, btn_step3, btn_step4
+                btn_step2, btn_step3, btn_step4, chapter_selector, single_chapter_content,
+                topic_input, genre_input, num_chapters_input, word_number_input,
+                user_guidance_input, characters_involved_input, key_items_input,
+                scene_location_input, time_constraint_input
             ]
         )
 
         btn_plot_arcs.click(
             fn=handle_show_plot_arcs,
-            inputs=[filepath_input, log_output],
+            inputs=[project_path_input, log_output],
             outputs=log_output
         )
 
@@ -1602,6 +1751,185 @@ def handle_load_config():
             "OpenAI", "", "https://api.openai.com/v1", "text-embedding-ada-002", 4,
             "", "玄幻", 10, 3000, "", "", "", "", "", "",
             message
+        )
+
+
+def handle_load_novel_config(filepath):
+    """处理加载小说配置事件"""
+    if not filepath or not filepath.strip():
+        return (
+            "", "玄幻", 10, 3000, "", "", "", "", "",
+            app.log_message("❌ 请先设置保存文件路径")
+        )
+
+    config_data, message = app.load_config_from_file(filepath.strip())
+    if config_data:
+        return (
+            config_data["topic"],
+            config_data["genre"],
+            config_data["num_chapters"],
+            config_data["word_number"],
+            config_data["user_guidance"],
+            config_data["characters_involved"],
+            config_data["key_items"],
+            config_data["scene_location"],
+            config_data["time_constraint"],
+            app.log_message(f"✅ 已加载小说配置: {message}")
+        )
+    else:
+        return (
+            "", "玄幻", 10, 3000, "", "", "", "", "",
+            app.log_message(f"❌ 加载小说配置失败: {message}")
+        )
+
+
+def handle_create_project(project_path):
+    """处理创建新项目事件"""
+    if not project_path or not project_path.strip():
+        return (
+            project_path,
+            """<div style="background: #f8d7da; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                        border-left: 4px solid #dc3545;">
+                <div style="color: #721c24; font-size: 0.9rem;">
+                    ❌ 请输入项目路径
+                </div>
+            </div>""",
+            app.log_message("❌ 请输入项目路径")
+        )
+
+    try:
+        project_path = project_path.strip()
+        # 创建项目目录
+        os.makedirs(project_path, exist_ok=True)
+
+        # 创建基本的项目结构
+        chapters_dir = os.path.join(project_path, "chapters")
+        os.makedirs(chapters_dir, exist_ok=True)
+
+        # 检查是否已有配置文件
+        config_file = os.path.join(project_path, "novel_config.json")
+        project_name = os.path.basename(project_path)
+
+        if os.path.exists(config_file):
+            status_html = f"""<div style="background: #fff3cd; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                                border-left: 4px solid #ffc107;">
+                <div style="color: #856404; font-size: 0.9rem;">
+                    ⚠️ 项目 "{project_name}" 已存在，已加载现有配置
+                </div>
+            </div>"""
+            log_msg = f"✅ 项目 '{project_name}' 已存在，已加载现有配置"
+        else:
+            # 创建默认配置
+            default_config = {
+                "topic": "",
+                "genre": "玄幻",
+                "num_chapters": 10,
+                "word_number": 3000,
+                "filepath": project_path,
+                "user_guidance": "",
+                "characters_involved": "",
+                "key_items": "",
+                "scene_location": "",
+                "time_constraint": ""
+            }
+            save_config(default_config, config_file)
+
+            status_html = f"""<div style="background: #d4edda; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                                border-left: 4px solid #28a745;">
+                <div style="color: #155724; font-size: 0.9rem;">
+                    ✅ 项目 "{project_name}" 创建成功！可以开始创作了
+                </div>
+            </div>"""
+            log_msg = f"✅ 新项目 '{project_name}' 创建成功"
+
+        return (
+            project_path,
+            status_html,
+            app.log_message(log_msg)
+        )
+
+    except Exception as e:
+        error_html = f"""<div style="background: #f8d7da; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                            border-left: 4px solid #dc3545;">
+            <div style="color: #721c24; font-size: 0.9rem;">
+                ❌ 创建项目失败: {str(e)}
+            </div>
+        </div>"""
+        return (
+            project_path,
+            error_html,
+            app.log_message(f"❌ 创建项目失败: {str(e)}")
+        )
+
+
+def handle_load_project(project_path):
+    """处理加载项目事件"""
+    if not project_path or not project_path.strip():
+        return (
+            project_path,
+            """<div style="background: #f8d7da; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                        border-left: 4px solid #dc3545;">
+                <div style="color: #721c24; font-size: 0.9rem;">
+                    ❌ 请输入项目路径
+                </div>
+            </div>""",
+            app.log_message("❌ 请输入项目路径")
+        )
+
+    try:
+        project_path = project_path.strip()
+        project_name = os.path.basename(project_path)
+
+        # 检查项目目录是否存在
+        if not os.path.exists(project_path):
+            error_html = f"""<div style="background: #f8d7da; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                                border-left: 4px solid #dc3545;">
+                <div style="color: #721c24; font-size: 0.9rem;">
+                    ❌ 项目目录不存在: {project_path}
+                </div>
+            </div>"""
+            return (
+                project_path,
+                error_html,
+                app.log_message(f"❌ 项目目录不存在: {project_path}")
+            )
+
+        # 检查是否有配置文件
+        config_file = os.path.join(project_path, "novel_config.json")
+        if os.path.exists(config_file):
+            status_html = f"""<div style="background: #d4edda; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                                border-left: 4px solid #28a745;">
+                <div style="color: #155724; font-size: 0.9rem;">
+                    ✅ 项目 "{project_name}" 加载成功！
+                </div>
+            </div>"""
+            log_msg = f"✅ 项目 '{project_name}' 加载成功"
+        else:
+            status_html = f"""<div style="background: #fff3cd; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                                border-left: 4px solid #ffc107;">
+                <div style="color: #856404; font-size: 0.9rem;">
+                    ⚠️ 项目 "{project_name}" 加载成功，但未找到配置文件，将使用默认设置
+                </div>
+            </div>"""
+            log_msg = f"⚠️ 项目 '{project_name}' 加载成功，使用默认设置"
+
+        return (
+            project_path,
+            status_html,
+            app.log_message(log_msg)
+        )
+
+    except Exception as e:
+        error_html = f"""<div style="background: #f8d7da; border-radius: 8px; padding: 1rem; margin-top: 1rem;
+                            border-left: 4px solid #dc3545;">
+            <div style="color: #721c24; font-size: 0.9rem;">
+                ❌ 加载项目失败: {str(e)}
+            </div>
+        </div>"""
+        return (
+            project_path,
+            error_html,
+            app.log_message(f"❌ 加载项目失败: {str(e)}")
         )
 
 def handle_save_config(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
@@ -2520,10 +2848,132 @@ def load_all_chapters(filepath):
 
     return "\n".join(all_content)
 
+
+def get_chapter_list(filepath):
+    """获取章节列表"""
+    if not filepath:
+        return []
+
+    chapters_dir = os.path.join(filepath, "chapters")
+    if not os.path.exists(chapters_dir):
+        return []
+
+    # 获取所有章节文件
+    chapter_files = [f for f in os.listdir(chapters_dir) if f.startswith("chapter_") and f.endswith(".txt")]
+    if not chapter_files:
+        return []
+
+    # 按章节号排序
+    chapter_numbers = []
+    for f in chapter_files:
+        try:
+            num = int(f.replace("chapter_", "").replace(".txt", ""))
+            chapter_numbers.append(num)
+        except ValueError:
+            continue
+
+    chapter_numbers.sort()
+    return [f"第{num}章" for num in chapter_numbers]
+
+
+def load_single_chapter(filepath, chapter_display_name):
+    """加载单个章节内容"""
+    if not filepath or not chapter_display_name:
+        return ""
+
+    # 从显示名称提取章节号
+    try:
+        chapter_num = int(chapter_display_name.replace("第", "").replace("章", ""))
+    except ValueError:
+        return ""
+
+    chapter_file = os.path.join(filepath, "chapters", f"chapter_{chapter_num}.txt")
+    if not os.path.exists(chapter_file):
+        return ""
+
+    return read_file(chapter_file)
+
+
+def handle_chapter_selection(filepath, selected_chapter):
+    """处理章节选择事件"""
+    content = load_single_chapter(filepath, selected_chapter)
+    return content
+
+
+def handle_prev_chapter(filepath, current_chapter):
+    """处理上一章按钮"""
+    chapter_list = get_chapter_list(filepath)
+    if not chapter_list or not current_chapter:
+        return current_chapter, ""
+
+    try:
+        current_idx = chapter_list.index(current_chapter)
+        if current_idx > 0:
+            prev_chapter = chapter_list[current_idx - 1]
+            content = load_single_chapter(filepath, prev_chapter)
+            return prev_chapter, content
+        else:
+            return current_chapter, load_single_chapter(filepath, current_chapter)
+    except ValueError:
+        return current_chapter, ""
+
+
+def handle_next_chapter(filepath, current_chapter):
+    """处理下一章按钮"""
+    chapter_list = get_chapter_list(filepath)
+    if not chapter_list or not current_chapter:
+        return current_chapter, ""
+
+    try:
+        current_idx = chapter_list.index(current_chapter)
+        if current_idx < len(chapter_list) - 1:
+            next_chapter = chapter_list[current_idx + 1]
+            content = load_single_chapter(filepath, next_chapter)
+            return next_chapter, content
+        else:
+            return current_chapter, load_single_chapter(filepath, current_chapter)
+    except ValueError:
+        return current_chapter, ""
+
+
+def handle_refresh_chapters(filepath, current_chapter):
+    """处理刷新章节列表"""
+    chapter_list = get_chapter_list(filepath)
+
+    # 如果当前选择的章节仍然存在，保持选择；否则选择第一个
+    if current_chapter and current_chapter in chapter_list:
+        selected = current_chapter
+        content = load_single_chapter(filepath, selected)
+    elif chapter_list:
+        selected = chapter_list[0]
+        content = load_single_chapter(filepath, selected)
+    else:
+        selected = None
+        content = ""
+
+    return gr.Dropdown(choices=chapter_list, value=selected), content
+
 def handle_filepath_change(filepath):
     """处理文件路径变化事件"""
     status = check_file_status_and_init_ui(filepath)
     all_chapters = load_all_chapters(filepath)
+
+    # 获取章节列表并设置默认选择
+    chapter_list = get_chapter_list(filepath)
+    if chapter_list:
+        selected_chapter = chapter_list[-1]  # 默认选择最新章节
+        single_chapter_content = load_single_chapter(filepath, selected_chapter)
+    else:
+        selected_chapter = None
+        single_chapter_content = ""
+
+    chapter_selector_update = gr.Dropdown(choices=chapter_list, value=selected_chapter)
+
+    # 加载小说配置
+    novel_params = {}
+    if filepath and filepath.strip():
+        novel_params = app.load_novel_config(filepath.strip())
+
     return (
         app.log_message(status['log_message']),  # log_output
         status['architecture_content'],          # architecture_content
@@ -2534,7 +2984,18 @@ def handle_filepath_change(filepath):
         status['summary_content'],               # summary_content
         status['btn_step2_state'],               # btn_step2
         status['btn_step3_state'],               # btn_step3
-        status['btn_step4_state']                # btn_step4
+        status['btn_step4_state'],               # btn_step4
+        chapter_selector_update,                 # chapter_selector
+        single_chapter_content,                  # single_chapter_content
+        novel_params.get("topic", ""),           # topic_input
+        novel_params.get("genre", "玄幻"),       # genre_input
+        novel_params.get("num_chapters", 10),    # num_chapters_input
+        novel_params.get("word_number", 3000),   # word_number_input
+        novel_params.get("user_guidance", ""),   # user_guidance_input
+        novel_params.get("characters_involved", ""),  # characters_involved_input
+        novel_params.get("key_items", ""),       # key_items_input
+        novel_params.get("scene_location", ""),  # scene_location_input
+        novel_params.get("time_constraint", "")  # time_constraint_input
     )
 
 # 删除重复的事件处理器函数，已经在create_interface中直接设置
