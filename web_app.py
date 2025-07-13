@@ -638,14 +638,22 @@ def create_interface():
                         """)
 
                         with gr.Row():
+                            with gr.Column(scale=3):
+                                with gr.Row():
+                                    project_path_input = gr.Textbox(
+                                        label="📁 项目路径",
+                                        placeholder="例如: /Users/username/novels/我的小说",
+                                        value=default_filepath,
+                                        info="小说项目的保存目录（每个小说一个独立目录）",
+                                        scale=4
+                                    )
+                                    btn_browse_folder = gr.Button(
+                                        "📂 浏览",
+                                        variant="secondary",
+                                        size="sm",
+                                        scale=1
+                                    )
                             with gr.Column(scale=2):
-                                project_path_input = gr.Textbox(
-                                    label="📁 项目路径",
-                                    placeholder="例如: /Users/username/novels/我的小说",
-                                    value=default_filepath,
-                                    info="小说项目的保存目录（每个小说一个独立目录）"
-                                )
-                            with gr.Column(scale=1):
                                 with gr.Row():
                                     btn_create_project = gr.Button(
                                         "📝 创建新项目",
@@ -668,82 +676,64 @@ def create_interface():
                         </div>
                         """)
 
-                    # 小说设置 - 简化版
-                    with gr.Accordion("📖 小说设置", open=True):
-                        topic_input = gr.Textbox(
-                            label="📝 主题描述",
-                            lines=4,
-                            max_lines=8,
-                            placeholder="请详细描述小说的主题、背景和核心故事...\n\n例如：\n• 故事背景：现代都市/古代仙侠/未来科幻等\n• 主要冲突：角色面临的核心挑战\n• 情感主线：爱情/友情/成长/复仇等\n• 独特元素：让故事与众不同的特色",
-                            value=default_topic,
-                            info="详细的主题描述有助于AI生成更符合预期的内容",
-                            interactive=True,
-                            show_label=True,
-                            container=True,
-                            scale=1
+                    # 基础设置
+                    topic_input = gr.Textbox(
+                        label="📝 小说主题",
+                        lines=3,
+                        placeholder="描述您的小说主题、背景和核心故事...",
+                        value=default_topic
+                    )
+
+                    with gr.Row():
+                        genre_input = gr.Dropdown(
+                            choices=genres,
+                            label="📚 类型",
+                            value=default_genre,
+                            allow_custom_value=True
+                        )
+                        num_chapters_input = gr.Number(
+                            label="📊 章节数",
+                            value=default_num_chapters,
+                            minimum=1,
+                            maximum=1000
+                        )
+                        word_number_input = gr.Number(
+                            label="📄 每章字数",
+                            value=default_word_number,
+                            minimum=100,
+                            maximum=10000
                         )
 
-                        with gr.Row():
-                            genre_input = gr.Dropdown(
-                                choices=genres,
-                                label="📚 小说类型",
-                                value=default_genre,
-                                allow_custom_value=True,
-                                info="选择预设类型或输入自定义类型"
-                            )
-                            num_chapters_input = gr.Number(
-                                label="📊 章节数量",
-                                value=default_num_chapters,
-                                minimum=1,
-                                maximum=1000,
-                                info="计划创作的总章节数"
-                            )
-                            word_number_input = gr.Number(
-                                label="📄 每章字数",
-                                value=default_word_number,
-                                minimum=100,
-                                maximum=10000,
-                                info="每章的目标字数"
-                            )
+                    # 配置管理
+                    with gr.Row():
+                        btn_load_config = gr.Button("📥 加载配置", scale=1)
+                        btn_save_config = gr.Button("💾 保存配置", scale=1)
+                        btn_reset_params = gr.Button("🔄 重置", variant="secondary", scale=1)
 
-                        # 配置操作按钮 - 移到基本设置区域
-                        with gr.Row():
-                            btn_load_config = gr.Button("📥 加载配置", elem_classes=["primary-button"], scale=1)
-                            btn_save_config = gr.Button("💾 保存配置", elem_classes=["primary-button"], scale=1)
-                            btn_reset_params = gr.Button("🔄 重置参数", variant="secondary", scale=1)
-
-                    # 高级设置 - 默认折叠
-                    with gr.Accordion("🎭 高级设置 (可选)", open=False):
+                    # 高级设置 - 折叠
+                    with gr.Accordion("🎭 高级设置", open=False):
                         characters_involved_input = gr.Textbox(
-                            label="👥 核心人物",
-                            lines=3,
-                            max_lines=6,
+                            label="👥 主要角色",
+                            lines=2,
                             value=default_characters_involved,
-                            placeholder="描述主要角色的性格、背景和关系...\n\n例如：\n• 主角：姓名、年龄、性格特点、能力特长\n• 配角：与主角的关系、作用和特色\n• 反派：动机、能力、与主角的冲突",
-                            info="详细的人物设定有助于保持角色一致性",
-                            interactive=True,
-                            show_label=True,
-                            container=True
+                            placeholder="主角、配角、反派等角色设定..."
                         )
 
                         with gr.Row():
                             key_items_input = gr.Textbox(
                                 label="🔑 关键道具",
                                 value=default_key_items,
-                                placeholder="重要的物品、武器或道具...",
-                                info="影响剧情的重要物品"
+                                placeholder="重要物品或道具..."
                             )
                             scene_location_input = gr.Textbox(
-                                label="🌍 空间坐标",
+                                label="🌍 主要场景",
                                 value=default_scene_location,
-                                placeholder="主要场景和地点...",
-                                info="故事发生的主要场所"
+                                placeholder="故事发生地点..."
                             )
                             time_constraint_input = gr.Textbox(
-                                label="⏰ 时间压力",
+                                label="⏰ 时间设定",
                                 value=default_time_constraint,
-                                placeholder="时间相关的约束或紧迫感...",
-                                info="推动剧情发展的时间因素"
+                                placeholder="时代背景或时间约束..."
                             )
 
 
@@ -756,40 +746,22 @@ def create_interface():
 
 
 
-                    # 创作设置 - 简化版
-                    with gr.Accordion("🎯 创作设置", open=True):
-                        with gr.Row():
-                            with gr.Column(scale=1):
-                                current_chapter = gr.Number(
-                                    label="📖 当前创作章节",
-                                    value=1,
-                                    minimum=1,
-                                    step=1,
-                                    info="选择要生成或编辑的章节"
-                                )
-
-                            with gr.Column(scale=2):
-                                user_guidance_input = gr.Textbox(
-                                    label="📝 本章创作指导",
-                                    lines=3,
-                                    max_lines=5,
-                                    value=default_user_guidance,
-                                    placeholder="例如：主角遇到神秘老人，揭示重要线索...\n\n可以包括：\n• 本章的主要情节发展\n• 角色的行为和对话要求\n• 场景描述的重点\n• 情感基调和氛围",
-                                    info="对本章剧情发展的具体要求（可选）",
-                                    interactive=True,
-                                    show_label=True,
-                                    container=True
-                                )
-
-                            with gr.Column(scale=2):
-                                gr.HTML("""
-                                <div style="background: #e3f2fd; border-radius: 8px; padding: 0.8rem; margin: 0.5rem 0;
-                                            border-left: 4px solid #2196f3;">
-                                    <div style="color: #1565c0; font-size: 0.85rem;">
-                                        💡 提示：项目路径已在上方"项目管理"区域设置，小说配置将自动保存到对应项目目录
-                                    </div>
-                                </div>
-                                """)
+                    # 创作设置
+                    with gr.Row():
+                        current_chapter = gr.Number(
+                            label="📖 当前章节",
+                            value=1,
+                            minimum=1,
+                            step=1,
+                            scale=1
+                        )
+                        user_guidance_input = gr.Textbox(
+                            label="📝 创作指导",
+                            lines=2,
+                            value=default_user_guidance,
+                            placeholder="本章的具体创作要求（可选）...",
+                            scale=3
+                        )
                     # AI生成步骤
                     with gr.Row():
                         btn_step1 = gr.Button("📋 生成架构", variant="primary", scale=1)
@@ -1061,35 +1033,31 @@ def create_interface():
                         </div>
                         """)
 
-                    # 一键智能配置
-                    with gr.Row():
-                        gr.HTML("""
-                        <div style="text-align: center; margin-bottom: 1.5rem;">
-                            <h3 style="margin: 0 0 0.5rem 0; color: #333;">⚡ 一键智能配置</h3>
-                            <p style="margin: 0; color: #666; font-size: 0.9rem;">选择AI服务商，系统将自动配置最佳参数，立即开始创作</p>
-                        </div>
-                        """)
+                    # 一键配置
+                    gr.HTML("""
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;
+                                text-align: center;">
+                        <h3 style="margin: 0;">⚡ 一键AI配置</h3>
+                    </div>
+                    """)
 
                     with gr.Row():
-                        with gr.Column():
-                            template_openai = gr.Button(
-                                "🚀 OpenAI GPT\n业界标杆，质量最高",
-                                variant="primary",
-                                size="lg",
-                                elem_classes=["primary-button"]
-                            )
-                        with gr.Column():
-                            template_gemini = gr.Button(
-                                "💎 Google Gemini\n免费额度大，性能优秀",
-                                variant="secondary",
-                                size="lg"
-                            )
-                        with gr.Column():
-                            template_deepseek = gr.Button(
-                                "🔥 DeepSeek\n国产之光，性价比王",
-                                variant="secondary",
-                                size="lg"
-                            )
+                        template_openai = gr.Button(
+                            "🚀 OpenAI GPT",
+                            variant="primary",
+                            scale=1
+                        )
+                        template_gemini = gr.Button(
+                            "💎 Google Gemini",
+                            variant="secondary",
+                            scale=1
+                        )
+                        template_deepseek = gr.Button(
+                            "🔥 DeepSeek",
+                            variant="secondary",
+                            scale=1
+                        )
 
                     # 配置完成后的引导
                     with gr.Row():
@@ -1112,254 +1080,149 @@ def create_interface():
                         </div>
                         """, visible=False)
 
-                    # 详细配置（高级用户）
-                    with gr.Accordion("🔧 详细配置 (高级用户)", open=False):
-                        gr.HTML("""
-                        <div style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 3px solid #6c757d;">
-                            <h4 style="margin: 0 0 0.5rem 0; color: #495057;">💡 高级配置说明</h4>
-                            <p style="margin: 0; color: #6c757d; font-size: 0.9rem;">
-                                如果您需要自定义AI模型参数，可以在这里进行详细配置。
-                                大多数用户使用上方的一键配置即可满足需求。
-                            </p>
-                        </div>
-                        """)
+                    # 详细配置
+                    with gr.Accordion("🔧 详细配置", open=False):
+
+                        # AI创作配置
+                        gr.HTML("<h4>🧠 AI创作配置</h4>")
 
                         with gr.Row():
-                            with gr.Column(scale=3):
-                                # LLM配置组
-                                with gr.Group():
-                                    gr.HTML("""
-                                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                                color: white; padding: 1rem; border-radius: 10px 10px 0 0; margin: -1rem -1rem 1rem -1rem;">
-                                        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                                            🧠 AI创作大脑设置
-                                            <span style="background: rgba(255,255,255,0.2); padding: 0.2rem 0.5rem;
-                                                         border-radius: 12px; font-size: 0.8rem;">智能生成</span>
-                                        </h3>
-                                        <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;">
-                                            配置AI的核心创作能力，负责生成小说内容
-                                        </p>
-                                    </div>
-                                    """)
-                                    # AI创作大脑配置
-                                    with gr.Row():
-                                        llm_interface = gr.Dropdown(
-                                            choices=llm_interfaces,
-                                            label="🤖 AI服务商",
-                                            value=default_llm_interface,
-                                            info="选择提供AI创作能力的服务商",
-                                            scale=2
-                                        )
-                                        llm_model = gr.Textbox(
-                                            label="🧠 AI大脑型号",
-                                            value=default_llm_model,
-                                            placeholder="例如: gpt-4o-mini, gemini-1.5-flash",
-                                            info="选择具体的AI创作模型",
-                                            scale=2
-                                        )
+                            llm_interface = gr.Dropdown(
+                                choices=llm_interfaces,
+                                label="🤖 服务商",
+                                value=default_llm_interface,
+                                scale=1
+                            )
+                            llm_model = gr.Textbox(
+                                label="🧠 模型",
+                                value=default_llm_model,
+                                placeholder="例如: gpt-4o-mini",
+                                scale=1
+                            )
 
-                                    llm_api_key = gr.Textbox(
-                                        label="🔑 AI访问密钥",
-                                        type="password",
-                                        value=default_llm_api_key,
-                                        placeholder="sk-... 或其他格式的API密钥",
-                                        info="连接AI服务的访问密钥，支持环境变量 $OPENAI_API_KEY"
-                                    )
+                        llm_api_key = gr.Textbox(
+                            label="🔑 API密钥",
+                            type="password",
+                            value=default_llm_api_key,
+                            placeholder="sk-... 或其他格式的API密钥"
+                        )
 
-                                    # AI创作参数调优
-                                    with gr.Accordion("🎛️ AI创作参数调优", open=False):
-                                        llm_base_url = gr.Textbox(
-                                            label="🌐 AI服务地址",
-                                            value=default_llm_base_url,
-                                            placeholder="https://api.openai.com/v1",
-                                            info="AI服务的连接地址，通常使用默认值"
-                                        )
+                        # 高级参数
+                        with gr.Accordion("🎛️ 高级参数", open=False):
+                            llm_base_url = gr.Textbox(
+                                label="🌐 服务地址",
+                                value=default_llm_base_url,
+                                placeholder="https://api.openai.com/v1"
+                            )
 
-                                        gr.HTML("""
-                                        <div style="margin: 1rem 0 0.5rem 0; padding: 0.75rem; background: #e3f2fd;
-                                                    border-radius: 8px; border-left: 3px solid #2196f3;">
-                                            <strong>🎨 AI创作风格调节</strong><br>
-                                            <small style="color: #1565c0;">
-                                                • 创意度: 控制AI的想象力，0.1严谨，0.7平衡，1.5天马行空<br>
-                                                • 输出长度: AI单次创作的字数限制，建议4096-8192字<br>
-                                                • 响应时间: AI思考时间限制，网络慢时可适当增加
-                                            </small>
-                                        </div>
-                                        """)
+                            with gr.Row():
+                                temperature = gr.Slider(
+                                    label="🎨 创意度",
+                                    minimum=0.0,
+                                    maximum=2.0,
+                                    value=default_temperature,
+                                    step=0.1
+                                )
+                                max_tokens = gr.Number(
+                                    label="📝 输出长度",
+                                    value=default_max_tokens,
+                                    minimum=100,
+                                    maximum=32000
+                                )
+                                timeout = gr.Number(
+                                    label="⏱️ 响应时间",
+                                    value=default_timeout,
+                                    minimum=10,
+                                    maximum=3600
+                                )
 
-                                        with gr.Row():
-                                            temperature = gr.Slider(
-                                                label="🎨 AI创意度",
-                                                minimum=0.0,
-                                                maximum=2.0,
-                                                value=default_temperature,
-                                                step=0.1,
-                                                info="AI想象力: 0.1(严谨写实) → 0.7(平衡创作) → 1.5(天马行空)"
-                                            )
-                                            max_tokens = gr.Number(
-                                                label="📝 AI输出长度",
-                                                value=default_max_tokens,
-                                                minimum=100,
-                                                maximum=32000,
-                                                info="AI单次创作的字数上限"
-                                            )
+                        # 测试和保存
+                        with gr.Row():
+                            btn_test_llm = gr.Button(
+                                "🧪 测试AI",
+                                variant="primary",
+                                scale=2
+                            )
+                            btn_save_llm = gr.Button(
+                                "💾 保存配置",
+                                variant="secondary",
+                                scale=1
+                            )
 
-                                        with gr.Row():
-                                            timeout = gr.Number(
-                                                label="⏱️ AI响应时间",
-                                                value=default_timeout,
-                                                minimum=10,
-                                                maximum=600,
-                                                info="AI思考时间限制(秒)"
-                                            )
-                                            llm_test_quick = gr.Button(
-                                                "⚡ 快速测试AI",
-                                                variant="secondary",
-                                                scale=1
-                                            )
+                        # 状态显示
+                        llm_status = gr.HTML("""
+                        <div style="margin: 1rem 0; padding: 0.75rem; background: #fff3cd;
+                                    border-radius: 8px; border-left: 3px solid #ffc107;">
+                            <div style="font-weight: 500; color: #856404;">⚠️ 未测试</div>
+                            <div style="font-size: 0.85rem; color: #856404;">请先测试配置确保连接正常</div>
+                        </div>
+                        """)
+                        # AI理解配置
+                        gr.HTML("<h4>🔍 AI理解配置</h4>")
 
-                                    # AI能力测试和保存
-                                    with gr.Row():
-                                        btn_test_llm = gr.Button(
-                                            "🧪 测试AI创作能力",
-                                            variant="primary",
-                                            elem_classes=["primary-button"],
-                                            scale=2
-                                        )
-                                        btn_save_llm = gr.Button(
-                                            "💾 保存AI配置",
-                                            variant="secondary",
-                                            scale=1
-                                        )
+                        with gr.Row():
+                            embedding_interface = gr.Dropdown(
+                                choices=llm_interfaces,
+                                label="🤖 服务商",
+                                value=default_embedding_interface,
+                                scale=1
+                            )
+                            embedding_model = gr.Textbox(
+                                label="🧠 模型",
+                                value=default_embedding_model,
+                                placeholder="例如: text-embedding-ada-002",
+                                scale=1
+                            )
 
-                                # 模型状态指示
-                                llm_status = gr.HTML("""
-                                <div style="margin: 1rem 0; padding: 0.75rem; background: #fff3cd;
-                                            border-radius: 8px; border-left: 3px solid #ffc107; display: flex; align-items: center;">
-                                    <div style="margin-right: 0.5rem; font-size: 1.2rem;">⚠️</div>
-                                    <div>
-                                        <div style="font-weight: 500; color: #856404;">未测试</div>
-                                        <div style="font-size: 0.85rem; color: #856404;">请先测试配置确保连接正常</div>
-                                    </div>
-                                </div>
-                                """)
+                        use_same_key = gr.Checkbox(
+                            label="🔗 与创作AI使用相同配置",
+                            value=True
+                        )
 
-                            with gr.Column(scale=2):
-                                # AI理解引擎配置组
-                                with gr.Group():
-                                    gr.HTML("""
-                                    <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                                                color: white; padding: 1rem; border-radius: 10px 10px 0 0; margin: -1rem -1rem 1rem -1rem;">
-                                        <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                                            🔍 AI理解引擎设置
-                                            <span style="background: rgba(255,255,255,0.2); padding: 0.2rem 0.5rem;
-                                                         border-radius: 12px; font-size: 0.8rem;">智能理解</span>
-                                        </h3>
-                                        <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.9rem;">
-                                            配置AI的理解能力，帮助AI更好地理解上下文和保持故事连贯性
-                                        </p>
-                                    </div>
-                                    """)
-                                    # AI理解引擎配置
-                                    with gr.Row():
-                                        embedding_interface = gr.Dropdown(
-                                            choices=llm_interfaces,
-                                            label="🤖 AI理解服务商",
-                                            value=default_embedding_interface,
-                                            info="选择提供AI理解能力的服务商",
-                                            scale=2
-                                        )
-                                        embedding_model = gr.Textbox(
-                                            label="🧠 AI理解引擎型号",
-                                            value=default_embedding_model,
-                                            placeholder="例如: text-embedding-ada-002",
-                                            info="AI理解和记忆模型的标识符",
-                                            scale=2
-                                        )
+                        # API密钥设置
+                        with gr.Group(visible=False) as embedding_api_group:
+                            embedding_api_key = gr.Textbox(
+                                label="🔑 API密钥",
+                                type="password",
+                                value=default_embedding_api_key,
+                                placeholder="请输入专用API密钥"
+                            )
+                            embedding_base_url = gr.Textbox(
+                                label="🌐 服务地址",
+                                value=default_embedding_base_url,
+                                placeholder="https://api.openai.com/v1"
+                            )
 
-                                    # AI服务统一配置
-                                    gr.HTML("""
-                                    <div style="margin: 1rem 0 0.5rem 0; padding: 0.75rem; background: #e8f5e8;
-                                                border-radius: 8px; border-left: 3px solid #28a745;">
-                                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                            <span style="font-size: 1.1rem;">🔗</span>
-                                            <strong style="color: #155724;">AI服务统一配置</strong>
-                                        </div>
-                                        <small style="color: #155724;">
-                                            智能推荐：创作大脑和理解引擎使用相同的AI服务，确保最佳协作效果
-                                        </small>
-                                    </div>
-                                    """)
+                            # 测试按钮
+                            with gr.Row():
+                                btn_test_embedding = gr.Button(
+                                    "🧪 测试理解AI",
+                                    variant="primary",
+                                    scale=2
+                                )
+                                btn_save_embedding = gr.Button(
+                                    "💾 保存配置",
+                                    variant="secondary",
+                                    scale=1
+                                )
 
-                                    with gr.Row():
-                                        use_same_key = gr.Checkbox(
-                                            label="🔗 与创作大脑使用相同的AI服务配置",
-                                            value=True,
-                                            info="推荐选项：统一AI服务配置，确保创作大脑和理解引擎协同工作"
-                                        )
+                        # 高级参数
+                        with gr.Accordion("🎛️ 理解参数", open=False):
+                            retrieval_k = gr.Number(
+                                label="🔍 检索数量",
+                                value=default_retrieval_k,
+                                minimum=1,
+                                maximum=20
+                            )
 
-                                # API密钥设置
-                                with gr.Group(visible=False) as embedding_api_group:
-                                    embedding_api_key = gr.Textbox(
-                                        label="🔑 API Key",
-                                        type="password",
-                                        value=default_embedding_api_key,
-                                        placeholder="请输入Embedding专用API密钥",
-                                        info="如果与LLM不同，请输入专用密钥"
-                                    )
-                                    embedding_base_url = gr.Textbox(
-                                        label="🌐 Base URL",
-                                        value=default_embedding_base_url,
-                                        placeholder="https://api.openai.com/v1",
-                                        info="Embedding API的基础地址"
-                                    )
-
-                                    # AI理解能力测试和保存
-                                    with gr.Row():
-                                        btn_test_embedding = gr.Button(
-                                            "🧪 测试AI理解能力",
-                                            variant="primary",
-                                            elem_classes=["primary-button"],
-                                            scale=2
-                                        )
-                                        btn_save_embedding = gr.Button(
-                                            "💾 保存AI配置",
-                                            variant="secondary",
-                                            scale=1
-                                        )
-
-                                    # AI理解参数调优
-                                    with gr.Accordion("🎛️ AI理解参数调优", open=False):
-                                        gr.HTML("""
-                                        <div style="margin: 0.5rem 0; padding: 0.75rem; background: #e8f5e8;
-                                                    border-radius: 8px; border-left: 3px solid #28a745;">
-                                            <strong>🧠 AI理解能力调节</strong><br>
-                                            <small style="color: #155724;">
-                                                • 检索数量: AI每次查找的相关内容片段数量<br>
-                                                • 建议值: 3-5片段(精准理解) 或 8-10片段(全面理解)
-                                            </small>
-                                        </div>
-                                        """)
-
-                                        retrieval_k = gr.Number(
-                                            label="🔍 AI检索数量",
-                                            value=default_retrieval_k,
-                                            minimum=1,
-                                            maximum=20,
-                                            info="AI每次查找的相关内容片段数量"
-                                        )
-
-                                # 模型状态指示
-                                embedding_status = gr.HTML("""
-                                <div style="margin: 1rem 0; padding: 0.75rem; background: #fff3cd;
-                                            border-radius: 8px; border-left: 3px solid #ffc107; display: flex; align-items: center;">
-                                    <div style="margin-right: 0.5rem; font-size: 1.2rem;">⚠️</div>
-                                    <div>
-                                        <div style="font-weight: 500; color: #856404;">未测试</div>
-                                        <div style="font-size: 0.85rem; color: #856404;">请先测试配置确保连接正常</div>
-                                    </div>
-                                </div>
-                                """)
+                        # 状态显示
+                        embedding_status = gr.HTML("""
+                        <div style="margin: 1rem 0; padding: 0.75rem; background: #fff3cd;
+                                    border-radius: 8px; border-left: 3px solid #ffc107;">
+                            <div style="font-weight: 500; color: #856404;">⚠️ 未测试</div>
+                            <div style="font-size: 0.85rem; color: #856404;">请先测试配置确保连接正常</div>
+                        </div>
+                        """)
 
                     with gr.Column(scale=2):
                         # 配置测试日志区域
@@ -1517,16 +1380,37 @@ def create_interface():
         )
 
         # 项目管理事件
+        btn_browse_folder.click(
+            fn=handle_browse_folder,
+            outputs=project_path_input
+        )
+
         btn_create_project.click(
-            fn=handle_create_project,
+            fn=handle_create_project_and_load,
             inputs=project_path_input,
-            outputs=[project_path_input, project_status, log_output]
+            outputs=[
+                project_path_input, project_status, log_output,
+                architecture_content, blueprint_content, chapter_content,
+                all_chapters_content, character_content, summary_content,
+                btn_step2, btn_step3, btn_step4, chapter_selector, single_chapter_content,
+                topic_input, genre_input, num_chapters_input, word_number_input,
+                user_guidance_input, characters_involved_input, key_items_input,
+                scene_location_input, time_constraint_input
+            ]
         )
 
         btn_load_project.click(
-            fn=handle_load_project,
+            fn=handle_load_project_and_load,
             inputs=project_path_input,
-            outputs=[project_path_input, project_status, log_output]
+            outputs=[
+                project_path_input, project_status, log_output,
+                architecture_content, blueprint_content, chapter_content,
+                all_chapters_content, character_content, summary_content,
+                btn_step2, btn_step3, btn_step4, chapter_selector, single_chapter_content,
+                topic_input, genre_input, num_chapters_input, word_number_input,
+                user_guidance_input, characters_involved_input, key_items_input,
+                scene_location_input, time_constraint_input
+            ]
         )
 
         # 测试配置事件
@@ -1616,7 +1500,7 @@ def create_interface():
                 project_path_input, current_chapter, word_number_input, user_guidance_input,
                 log_output
             ],
-            outputs=[chapter_content, all_chapters_content, log_output, btn_step4]
+            outputs=[chapter_content, all_chapters_content, log_output, btn_step4, current_chapter, chapter_selector]
         )
 
         btn_step4.click(
@@ -1629,7 +1513,7 @@ def create_interface():
                 project_path_input, current_chapter, word_number_input, chapter_content,
                 log_output
             ],
-            outputs=[log_output, character_content, summary_content]
+            outputs=[log_output, character_content, summary_content, current_chapter, chapter_selector]
         )
 
         # 辅助功能事件
@@ -1931,6 +1815,150 @@ def handle_load_project(project_path):
             error_html,
             app.log_message(f"❌ 加载项目失败: {str(e)}")
         )
+
+
+def handle_create_project_and_load(project_path):
+    """处理创建项目事件并加载内容"""
+    # 先执行创建项目的逻辑
+    create_result = handle_create_project(project_path)
+    project_path_result, status_html, log_msg = create_result
+
+    # 如果创建成功，加载内容
+    if "✅" in status_html or "⚠️" in status_html:
+        # 调用文件路径变化处理函数来加载内容
+        filepath_result = handle_filepath_change(project_path_result)
+
+        # 返回完整的结果
+        return (
+            project_path_result,  # project_path_input
+            status_html,          # project_status
+            log_msg,              # log_output
+            filepath_result[1],   # architecture_content
+            filepath_result[2],   # blueprint_content
+            filepath_result[3],   # chapter_content
+            filepath_result[4],   # all_chapters_content
+            filepath_result[5],   # character_content
+            filepath_result[6],   # summary_content
+            filepath_result[7],   # btn_step2
+            filepath_result[8],   # btn_step3
+            filepath_result[9],   # btn_step4
+            filepath_result[10],  # chapter_selector
+            filepath_result[11],  # single_chapter_content
+            filepath_result[12],  # topic_input
+            filepath_result[13],  # genre_input
+            filepath_result[14],  # num_chapters_input
+            filepath_result[15],  # word_number_input
+            filepath_result[16],  # user_guidance_input
+            filepath_result[17],  # characters_involved_input
+            filepath_result[18],  # key_items_input
+            filepath_result[19],  # scene_location_input
+            filepath_result[20]   # time_constraint_input
+        )
+    else:
+        # 创建失败，返回空内容
+        return (
+            project_path_result, status_html, log_msg,
+            "", "", "", "", "", "",  # 内容为空
+            gr.Button("📑 生成目录", variant="secondary", interactive=False),
+            gr.Button("📝 生成章节", variant="secondary", interactive=False),
+            gr.Button("✅ 内容定稿", variant="secondary", interactive=False),
+            gr.Dropdown(choices=[], value=None), "",  # 章节选择器和内容为空
+            "", "玄幻", 10, 3000, "", "", "", "", ""  # 默认小说参数
+        )
+
+
+def handle_load_project_and_load(project_path):
+    """处理加载项目事件并加载内容"""
+    # 先执行加载项目的逻辑
+    load_result = handle_load_project(project_path)
+    project_path_result, status_html, log_msg = load_result
+
+    # 如果加载成功，加载内容
+    if "✅" in status_html or "⚠️" in status_html:
+        # 调用文件路径变化处理函数来加载内容
+        filepath_result = handle_filepath_change(project_path_result)
+
+        # 返回完整的结果
+        return (
+            project_path_result,  # project_path_input
+            status_html,          # project_status
+            log_msg,              # log_output
+            filepath_result[1],   # architecture_content
+            filepath_result[2],   # blueprint_content
+            filepath_result[3],   # chapter_content
+            filepath_result[4],   # all_chapters_content
+            filepath_result[5],   # character_content
+            filepath_result[6],   # summary_content
+            filepath_result[7],   # btn_step2
+            filepath_result[8],   # btn_step3
+            filepath_result[9],   # btn_step4
+            filepath_result[10],  # chapter_selector
+            filepath_result[11],  # single_chapter_content
+            filepath_result[12],  # topic_input
+            filepath_result[13],  # genre_input
+            filepath_result[14],  # num_chapters_input
+            filepath_result[15],  # word_number_input
+            filepath_result[16],  # user_guidance_input
+            filepath_result[17],  # characters_involved_input
+            filepath_result[18],  # key_items_input
+            filepath_result[19],  # scene_location_input
+            filepath_result[20]   # time_constraint_input
+        )
+    else:
+        # 加载失败，返回空内容
+        return (
+            project_path_result, status_html, log_msg,
+            "", "", "", "", "", "",  # 内容为空
+            gr.Button("📑 生成目录", variant="secondary", interactive=False),
+            gr.Button("📝 生成章节", variant="secondary", interactive=False),
+            gr.Button("✅ 内容定稿", variant="secondary", interactive=False),
+            gr.Dropdown(choices=[], value=None), "",  # 章节选择器和内容为空
+            "", "玄幻", 10, 3000, "", "", "", "", ""  # 默认小说参数
+        )
+
+
+def handle_browse_folder():
+    """处理文件夹浏览事件"""
+    try:
+        # 使用更安全的方式处理文件夹选择
+        import subprocess
+        import platform
+
+        system = platform.system()
+
+        if system == "Darwin":  # macOS
+            # 使用osascript调用Finder
+            result = subprocess.run([
+                'osascript', '-e',
+                'tell application "Finder" to set folder_path to choose folder with prompt "选择小说项目目录"',
+                '-e', 'return POSIX path of folder_path'
+            ], capture_output=True, text=True, timeout=30)
+
+            if result.returncode == 0:
+                return result.stdout.strip()
+            else:
+                return ""
+
+        elif system == "Windows":
+            # Windows使用tkinter
+            import tkinter as tk
+            from tkinter import filedialog
+
+            root = tk.Tk()
+            root.withdraw()
+            folder_path = filedialog.askdirectory(title="选择小说项目目录")
+            root.destroy()
+
+            return folder_path if folder_path else ""
+
+        else:
+            # Linux等其他系统
+            return "💡 请手动输入项目路径，或使用系统文件管理器复制路径"
+
+    except subprocess.TimeoutExpired:
+        return "⏰ 文件夹选择超时，请手动输入路径"
+    except Exception as e:
+        return f"💡 请手动输入项目路径: {str(e)}"
 
 def handle_save_config(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
                       embedding_interface, embedding_api_key, embedding_base_url, embedding_model, retrieval_k,
@@ -2506,7 +2534,9 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
             "",  # chapter_content
             "",  # all_chapters_content
             current_log + app.log_message("❌ 请先设置保存文件路径"),
-            gr.Button("✅ 内容定稿", variant="secondary", interactive=False)  # btn_step4
+            gr.Button("✅ 内容定稿", variant="secondary", interactive=False),  # btn_step4
+            chapter_num,  # current_chapter (保持原值)
+            gr.Dropdown(choices=[], value=None)  # chapter_selector
         )
 
     try:
@@ -2541,6 +2571,9 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
                 chapter_file = os.path.join(filepath, "chapters", f"chapter_{chapter_num}.txt")
                 chapter_content = read_file(chapter_file)
 
+                # 设置章节状态为草稿
+                set_chapter_status(filepath, int(chapter_num), "草稿")
+
                 return chapter_content, "✅ 章节草稿生成完成！"
             except Exception as e:
                 return "", f"❌ 生成章节草稿时出错: {str(e)}"
@@ -2551,20 +2584,27 @@ def handle_generate_chapter_draft(llm_interface, llm_api_key, llm_base_url, llm_
         # 加载所有章节内容
         all_chapters = load_all_chapters(filepath)
 
+        # 更新章节选择器
+        chapter_list = get_chapter_list(filepath)
+        current_chapter_display = f"第{chapter_num}章 📝"  # 新生成的是草稿
+        chapter_selector_update = gr.Dropdown(choices=chapter_list, value=current_chapter_display)
+
         # 如果生成成功，启用第四步按钮
         if chapter_content and "✅" in result_msg:
             next_button = gr.Button("✅ 内容定稿", variant="primary", interactive=True)
         else:
             next_button = gr.Button("✅ 内容定稿", variant="secondary", interactive=False)
 
-        return chapter_content, all_chapters, final_log, next_button
+        return chapter_content, all_chapters, final_log, next_button, chapter_num, chapter_selector_update
 
     except Exception as e:
         return (
             "",  # chapter_content
             "",  # all_chapters_content
             current_log + app.log_message(f"❌ 生成章节草稿时出错: {str(e)}"),
-            gr.Button("✅ 内容定稿", variant="secondary", interactive=False)  # btn_step4
+            gr.Button("✅ 内容定稿", variant="secondary", interactive=False),  # btn_step4
+            chapter_num,  # current_chapter (保持原值)
+            gr.Dropdown(choices=get_chapter_list(filepath), value=None)  # chapter_selector
         )
 
 def handle_finalize_chapter(llm_interface, llm_api_key, llm_base_url, llm_model, temperature, max_tokens, timeout,
@@ -2578,14 +2618,18 @@ def handle_finalize_chapter(llm_interface, llm_api_key, llm_base_url, llm_model,
         return (
             current_log + app.log_message("❌ 请先设置保存文件路径"),
             "",  # character_content
-            ""   # summary_content
+            "",  # summary_content
+            chapter_num,  # current_chapter (保持原值)
+            gr.Dropdown(choices=[], value=None)  # chapter_selector
         )
 
     if not chapter_content.strip():
         return (
             current_log + app.log_message("❌ 章节内容为空，无法定稿"),
             "",  # character_content
-            ""   # summary_content
+            "",  # summary_content
+            chapter_num,  # current_chapter (保持原值)
+            gr.Dropdown(choices=get_chapter_list(filepath), value=None)  # chapter_selector
         )
 
     try:
@@ -2628,20 +2672,31 @@ def handle_finalize_chapter(llm_interface, llm_api_key, llm_base_url, llm_model,
 
         character_content = ""
         summary_content = ""
+        next_chapter_num = chapter_num  # 默认保持当前章节号
 
         if "✅" in result:
             if os.path.exists(character_file):
                 character_content = read_file(character_file)
             if os.path.exists(summary_file):
                 summary_content = read_file(summary_file)
+            # 定稿成功后，设置章节状态为已定稿
+            set_chapter_status(filepath, int(chapter_num), "已定稿")
+            # 自动将当前章节号增加1，准备下一章
+            next_chapter_num = int(chapter_num) + 1
 
-        return final_log, character_content, summary_content
+        # 更新章节选择器
+        chapter_list = get_chapter_list(filepath)
+        chapter_selector_update = gr.Dropdown(choices=chapter_list, value=None)
+
+        return final_log, character_content, summary_content, next_chapter_num, chapter_selector_update
 
     except Exception as e:
         return (
             current_log + app.log_message(f"❌ 定稿章节时出错: {str(e)}"),
             "",  # character_content
-            ""   # summary_content
+            "",  # summary_content
+            chapter_num,  # current_chapter (保持原值)
+            gr.Dropdown(choices=get_chapter_list(filepath), value=None)  # chapter_selector
         )
 
 # 辅助功能处理函数
@@ -2656,16 +2711,37 @@ def handle_consistency_check(llm_interface, llm_api_key, llm_base_url, llm_model
 
         def check_task():
             try:
+                # 读取必要的文件内容
+                chap_file = os.path.join(filepath, "chapters", f"chapter_{chapter_num}.txt")
+                chapter_text = read_file(chap_file)
+
+                if not chapter_text.strip():
+                    return "⚠️ 当前章节文件为空或不存在，无法进行一致性检查。"
+
+                # 读取其他必要文件
+                novel_setting_file = os.path.join(filepath, "Novel_architecture.txt")
+                novel_setting = read_file(novel_setting_file)
+
+                character_state_file = os.path.join(filepath, "character_state.txt")
+                character_state = read_file(character_state_file)
+
+                global_summary_file = os.path.join(filepath, "global_summary.txt")
+                global_summary = read_file(global_summary_file)
+
+                # 调用一致性检查函数
                 result = check_consistency(
-                    interface_format=llm_interface,
+                    novel_setting=novel_setting,
+                    character_state=character_state,
+                    global_summary=global_summary,
+                    chapter_text=chapter_text,
                     api_key=llm_api_key,
                     base_url=llm_base_url,
-                    llm_model=llm_model,
-                    filepath=filepath,
-                    chapter_num=int(chapter_num),
+                    model_name=llm_model,
                     temperature=temperature,
+                    interface_format=llm_interface,
                     max_tokens=int(max_tokens),
-                    timeout=int(timeout)
+                    timeout=int(timeout),
+                    plot_arcs=""  # 可以后续扩展读取剧情要点文件
                 )
                 return f"✅ 一致性检查完成！\n{result}"
             except Exception as e:
@@ -2814,7 +2890,7 @@ def check_file_status_and_init_ui(filepath):
     return result
 
 def load_all_chapters(filepath):
-    """加载所有章节内容"""
+    """加载所有章节内容，包含状态信息"""
     if not filepath:
         return ""
 
@@ -2844,13 +2920,57 @@ def load_all_chapters(filepath):
         chapter_file = os.path.join(chapters_dir, f"chapter_{num}.txt")
         content = read_file(chapter_file)
         if content:
-            all_content.append(f"=== 第{num}章 ===\n\n{content}\n\n")
+            status = get_chapter_status(filepath, num)
+            status_icon = "✅" if status == "已定稿" else "📝"
+            all_content.append(f"=== 第{num}章 {status_icon} ({status}) ===\n\n{content}\n\n")
 
     return "\n".join(all_content)
 
 
+def get_chapter_status(filepath, chapter_num):
+    """获取章节状态：草稿或已定稿"""
+    if not filepath:
+        return "未知"
+
+    # 检查是否存在定稿状态文件
+    status_file = os.path.join(filepath, "chapter_status.json")
+    if os.path.exists(status_file):
+        try:
+            with open(status_file, 'r', encoding='utf-8') as f:
+                status_data = json.load(f)
+            return status_data.get(str(chapter_num), "草稿")
+        except:
+            return "草稿"
+    return "草稿"
+
+def set_chapter_status(filepath, chapter_num, status):
+    """设置章节状态"""
+    if not filepath:
+        return
+
+    status_file = os.path.join(filepath, "chapter_status.json")
+    status_data = {}
+
+    # 读取现有状态
+    if os.path.exists(status_file):
+        try:
+            with open(status_file, 'r', encoding='utf-8') as f:
+                status_data = json.load(f)
+        except:
+            status_data = {}
+
+    # 更新状态
+    status_data[str(chapter_num)] = status
+
+    # 保存状态
+    try:
+        with open(status_file, 'w', encoding='utf-8') as f:
+            json.dump(status_data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"保存章节状态失败: {e}")
+
 def get_chapter_list(filepath):
-    """获取章节列表"""
+    """获取章节列表，包含状态信息"""
     if not filepath:
         return []
 
@@ -2873,7 +2993,17 @@ def get_chapter_list(filepath):
             continue
 
     chapter_numbers.sort()
-    return [f"第{num}章" for num in chapter_numbers]
+
+    # 添加状态信息
+    chapter_list = []
+    for num in chapter_numbers:
+        status = get_chapter_status(filepath, num)
+        if status == "已定稿":
+            chapter_list.append(f"第{num}章 ✅")
+        else:
+            chapter_list.append(f"第{num}章 📝")
+
+    return chapter_list
 
 
 def load_single_chapter(filepath, chapter_display_name):
@@ -2881,9 +3011,11 @@ def load_single_chapter(filepath, chapter_display_name):
     if not filepath or not chapter_display_name:
         return ""
 
-    # 从显示名称提取章节号
+    # 从显示名称提取章节号（处理带状态的名称）
     try:
-        chapter_num = int(chapter_display_name.replace("第", "").replace("章", ""))
+        # 移除状态标识符
+        clean_name = chapter_display_name.replace("✅", "").replace("📝", "").strip()
+        chapter_num = int(clean_name.replace("第", "").replace("章", ""))
     except ValueError:
         return ""
 
@@ -2891,7 +3023,13 @@ def load_single_chapter(filepath, chapter_display_name):
     if not os.path.exists(chapter_file):
         return ""
 
-    return read_file(chapter_file)
+    content = read_file(chapter_file)
+
+    # 在内容前添加状态信息
+    status = get_chapter_status(filepath, chapter_num)
+    status_info = f"📊 章节状态: {status}\n" + "="*50 + "\n\n"
+
+    return status_info + content
 
 
 def handle_chapter_selection(filepath, selected_chapter):
@@ -3006,9 +3144,12 @@ if __name__ == "__main__":
     print("🚀 启动AI小说生成器Web界面...")
     print("📝 访问地址: http://localhost:7860")
 
+    # 获取端口号，优先使用环境变量
+    port = int(os.environ.get('GRADIO_SERVER_PORT', 7863))
+
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7863,
+        server_port=port,
         share=False,
         show_error=True
     )
